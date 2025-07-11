@@ -90,18 +90,14 @@
       <create_parent_folder>N</create_parent_folder>
       <exec_per_row>N</exec_per_row>
       <filename>${PROJECT_HOME}/UPLOAD_SHARING/DART/UPLOAD_TO_DART.hpl</filename>
-      <logext/>
-      <logfile/>
       <loglevel>Basic</loglevel>
       <parameters>
         <parameter>
           <name>dart_name_param</name>
-          <stream_name/>
           <value>${ai_name_info_param}</value>
         </parameter>
         <parameter>
           <name>dart_gallery_id_param</name>
-          <stream_name/>
           <value>${dart_gallery_id_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>
