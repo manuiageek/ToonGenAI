@@ -11,8 +11,8 @@
     <parameters>
       <parameter>
         <name>toongenai_ss_folder_param</name>
-        <default_value/>
-        <description>SOLO LEVELING</description>
+        <default_value>TENCHI MUYO</default_value>
+        <description>TENCHI MUYO</description>
       </parameter>
     </parameters>
     <capture_transform_performance>N</capture_transform_performance>
@@ -488,16 +488,13 @@ Alert(getVariable(strVarName, ""));</jsScript_script>
     </partitioning>
     <doNotFailIfNoFile>N</doNotFailIfNoFile>
     <dynamic_include_subfolders>N</dynamic_include_subfolders>
-    <exclude_wildcard_Field/>
     <file>
-      <exclude_filemask/>
       <file_required>N</file_required>
       <filemask>.*\.png</filemask>
       <include_subfolders>N</include_subfolders>
       <name>${ai_upload_folder}</name>
     </file>
     <filefield>N</filefield>
-    <filename_Field/>
     <filter>
       <filterfiletype>only_files</filterfiletype>
     </filter>
@@ -505,8 +502,6 @@ Alert(getVariable(strVarName, ""));</jsScript_script>
     <limit>0</limit>
     <raiseAnExceptionIfNoFile>N</raiseAnExceptionIfNoFile>
     <rownum>N</rownum>
-    <rownum_field/>
-    <wildcard_Field/>
     <attributes/>
     <GUI>
       <xloc>112</xloc>

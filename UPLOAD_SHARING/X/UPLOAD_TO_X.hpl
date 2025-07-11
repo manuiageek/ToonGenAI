@@ -11,7 +11,7 @@
     <parameters>
       <parameter>
         <name>twitter_message_param</name>
-        <default_value>#ChizuruTachibana #NandeKokoniSenseiGa #AIFANART</default_value>
+        <default_value>#HikariHazakura #NandeKokoniSenseiGa #AIFANART</default_value>
         <description/>
       </parameter>
     </parameters>
@@ -389,10 +389,6 @@ switch (idx_filename) {
     </partitioning>
     <fields>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>python_exe</name>
         <precision>-1</precision>
@@ -401,10 +397,6 @@ switch (idx_filename) {
         <variable>${python_exe}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_upload_py</name>
         <precision>-1</precision>
@@ -413,10 +405,6 @@ switch (idx_filename) {
         <variable>${x_upload_py}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_dest_done_folder</name>
         <precision>-1</precision>
@@ -425,10 +413,6 @@ switch (idx_filename) {
         <variable>${x_dest_done_folder}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_consumer_key</name>
         <precision>-1</precision>
@@ -437,10 +421,6 @@ switch (idx_filename) {
         <variable>${x_consumer_key}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_consumer_secret</name>
         <precision>-1</precision>
@@ -449,10 +429,6 @@ switch (idx_filename) {
         <variable>${x_consumer_secret}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_access_token</name>
         <precision>-1</precision>
@@ -461,10 +437,6 @@ switch (idx_filename) {
         <variable>${x_access_token}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>x_access_token_secret</name>
         <precision>-1</precision>

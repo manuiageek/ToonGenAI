@@ -11,12 +11,12 @@
     <parameters>
       <parameter>
         <name>dart_gallery_id_param</name>
-        <default_value/>
-        <description>6C5DC295-C53C-207F-627C-0638E7DA3920</description>
+        <default_value>0E439D24-178B-8573-B036-979996F7B6F6</default_value>
+        <description>0E439D24-178B-8573-B036-979996F7B6F6</description>
       </parameter>
       <parameter>
         <name>dart_name_param</name>
-        <default_value/>
+        <default_value>#Mihoshi #TenchiMuyo #AIFANART</default_value>
         <description>#Helena #DeadOrAlive #AIFANART</description>
       </parameter>
     </parameters>
@@ -43,6 +43,11 @@
     </hop>
     <hop>
       <from>Get variables</from>
+      <to>Log variables</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Log variables</from>
       <to>Execute PYTHON PROCESS</to>
       <enabled>Y</enabled>
     </hop>
@@ -64,7 +69,7 @@
     <row_threshold>0</row_threshold>
     <attributes/>
     <GUI>
-      <xloc>640</xloc>
+      <xloc>784</xloc>
       <yloc>128</yloc>
     </GUI>
   </transform>
@@ -81,13 +86,25 @@
     </partitioning>
     <argumentFields>
       <argumentField>
-        <argumentFieldName>python_app_param</argumentFieldName>
+        <argumentFieldName>dart_upload_py</argumentFieldName>
       </argumentField>
       <argumentField>
         <argumentFieldName>dart_name_param</argumentFieldName>
       </argumentField>
       <argumentField>
         <argumentFieldName>dart_gallery_id_param</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>dart_client_id</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>dart_client_secret</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>dart_redirect_uri</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>dart_ai_upload_folder</argumentFieldName>
       </argumentField>
     </argumentFields>
     <argumentsInFields>Y</argumentsInFields>
@@ -99,7 +116,7 @@
     <resultfieldname>stdout</resultfieldname>
     <attributes/>
     <GUI>
-      <xloc>432</xloc>
+      <xloc>576</xloc>
       <yloc>128</yloc>
     </GUI>
   </transform>
@@ -116,10 +133,6 @@
     </partitioning>
     <fields>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>python_exe</name>
         <precision>-1</precision>
@@ -128,10 +141,6 @@
         <variable>${python_exe}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>dart_upload_py</name>
         <precision>-1</precision>
@@ -140,34 +149,14 @@
         <variable>${dart_upload_py}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
-        <name>dart_ai_upload_folder</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type/>
-        <variable>${dart_ai_upload_folder}</variable>
-      </field>
-      <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
-        <length>-1</length>
-        <name>dart_dest_done_folder</name>
+        <name>dart_name_param</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${dart_dest_done_folder}</variable>
+        <variable>${dart_name_param}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>dart_gallery_id_param</name>
         <precision>-1</precision>
@@ -176,57 +165,88 @@
         <variable>${dart_gallery_id_param}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
-        <name>x_consumer_key</name>
+        <name>dart_client_id</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${x_consumer_key}</variable>
+        <variable>${dart_client_id}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
-        <name>x_consumer_secret</name>
+        <name>dart_client_secret</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${x_consumer_secret}</variable>
+        <variable>${dart_client_secret}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
-        <name>x_access_token</name>
+        <name>dart_redirect_uri</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${x_access_token}</variable>
+        <variable>${dart_redirect_uri}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
-        <name>x_access_token_secret</name>
+        <name>dart_ai_upload_folder</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${x_access_token_secret}</variable>
+        <variable>${dart_ai_upload_folder}</variable>
       </field>
     </fields>
     <attributes/>
     <GUI>
       <xloc>240</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Log variables</name>
+    <type>WriteToLog</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <displayHeader>Y</displayHeader>
+    <fields>
+      <field>
+        <name>python_exe</name>
+      </field>
+      <field>
+        <name>dart_upload_py</name>
+      </field>
+      <field>
+        <name>dart_name_param</name>
+      </field>
+      <field>
+        <name>dart_gallery_id_param</name>
+      </field>
+      <field>
+        <name>dart_client_id</name>
+      </field>
+      <field>
+        <name>dart_client_secret</name>
+      </field>
+      <field>
+        <name>dart_redirect_uri</name>
+      </field>
+      <field>
+        <name>dart_ai_upload_folder</name>
+      </field>
+    </fields>
+    <limitRows>N</limitRows>
+    <limitRowsNumber>0</limitRowsNumber>
+    <loglevel>Basic</loglevel>
+    <attributes/>
+    <GUI>
+      <xloc>384</xloc>
       <yloc>128</yloc>
     </GUI>
   </transform>
@@ -261,7 +281,7 @@
     <loglevel>Detailed</loglevel>
     <attributes/>
     <GUI>
-      <xloc>432</xloc>
+      <xloc>576</xloc>
       <yloc>288</yloc>
     </GUI>
   </transform>

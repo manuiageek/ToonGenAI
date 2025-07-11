@@ -111,24 +111,14 @@ var toongenai_ss_folder_param = FOLDER;
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <accept_field/>
     <accept_filenames>N</accept_filenames>
-    <accept_transform_name/>
     <add_to_result_filenames>Y</add_to_result_filenames>
-    <bad_line_files_destination_directory/>
     <bad_line_files_extension>warning</bad_line_files_extension>
-    <encoding/>
     <error_ignored>N</error_ignored>
-    <error_line_files_destination_directory/>
     <error_line_files_extension>error</error_line_files_extension>
     <error_line_skipped>N</error_line_skipped>
-    <extensionFieldName/>
     <fields>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>SOURCE</name>
         <precision>-1</precision>
@@ -137,10 +127,6 @@ var toongenai_ss_folder_param = FOLDER;
         <type>String</type>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>CHARACTER</name>
         <precision>-1</precision>
@@ -149,10 +135,6 @@ var toongenai_ss_folder_param = FOLDER;
         <type>String</type>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>FOLDER</name>
         <precision>-1</precision>
@@ -161,10 +143,6 @@ var toongenai_ss_folder_param = FOLDER;
         <type>String</type>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>GALLERY_ID</name>
         <precision>-1</precision>
@@ -173,10 +151,6 @@ var toongenai_ss_folder_param = FOLDER;
         <type>String</type>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>TODO</name>
         <precision>-1</precision>
@@ -186,26 +160,15 @@ var toongenai_ss_folder_param = FOLDER;
       </field>
     </fields>
     <file>
-      <exclude_filemask/>
       <file_required>Y</file_required>
       <filemask>CHARACTER_SELECTOR.xlsx</filemask>
       <include_subfolders>N</include_subfolders>
       <name>${PROJECT_HOME}/UPLOAD_SHARING/XLSX</name>
     </file>
-    <filefield/>
     <header>Y</header>
-    <hiddenFieldName/>
-    <lastModificationTimeFieldName/>
     <limit>0</limit>
-    <line_number_files_destination_directory/>
     <line_number_files_extension>line</line_number_files_extension>
     <noempty>Y</noempty>
-    <pathFieldName/>
-    <rootUriNameFieldName/>
-    <rownumfield/>
-    <schema_definition/>
-    <sheetfield/>
-    <sheetrownumfield/>
     <sheets>
       <sheet>
         <name>characters</name>
@@ -213,12 +176,9 @@ var toongenai_ss_folder_param = FOLDER;
         <startrow>0</startrow>
       </sheet>
     </sheets>
-    <shortFileFieldName/>
-    <sizeFieldName/>
     <spreadsheet_type>POI</spreadsheet_type>
     <stoponempty>N</stoponempty>
     <strict_types>N</strict_types>
-    <uriNameFieldName/>
     <attributes/>
     <GUI>
       <xloc>160</xloc>
