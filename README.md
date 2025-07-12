@@ -1,25 +1,32 @@
-** Ce que fait ce repository **
-Un projet APACHE HOP PROJECT qui fait : 
-- UPLOAD_SHARING : Upload d'images (format png) en mode robot sur X et Deviantart avec des clés 
-- CIVITAI_UTILITY : Gestion des téléchargements de LORA depuis civitai
-- LORA_PREPARATION : Prépération à la réalisation de LORA (lowRank) à base d'anime
+# APACHE HOP PROJECT
 
-** UPLOAD_SHARING ** 
-Automatise le renommage, l’archivage et la publication d’images IA sur DeviantArt et Twitter/X, via Apache Hop et des scripts Python.
+Projet qui automatise la gestion et la publication d’images IA sur DeviantArt et X/Twitter, avec utilitaires pour Civitai et préparation LORA/LowRank.
 
-*** Fonctionnalités principales *** :
-- Renommage et archivage des images (pipelines Hop)
+## Fonctionnalités
+
+### UPLOAD_SHARING
+- Renommage et archivage des images (via pipelines Hop)
 - Publication automatique sur DeviantArt et X/Twitter (API, scripts Python)
 - Sélection facile des personnages à publier via un fichier Excel
 
-*** Prérequis *** 
+### CIVITAI_UTILITY
+- Gestion des téléchargements de LORA depuis Civitai
+
+### LORA_PREPARATION
+- Préparation à la création de LORA (LowRank) à base d’anime
+
+---
+
+## Prérequis
 - Apache Hop
-- Python 3 avec `tweepy`, `requests`, `flask`
-- Clés API X et DeviantArt
+- Python 3 avec les librairies : `tweepy`, `requests`, `flask`
+- Clés API X/Twitter et DeviantArt
 
-*** Usage rapide *** 
-1. Sélectionner les images à publier dans `XLSX/CHARACTER_SELECTOR.xlsx` (colonne TODO)
-2. Lancer le workflow `_JOB_UPLOAD_XDART.hwf` via Hop
+---
+## Usage rapide
+1. Sélectionne les images à publier dans `XLSX/CHARACTER_SELECTOR.xlsx` (colonne TODO)
+2. Lance le workflow `_JOB_UPLOAD_XDART.hwf` via Hop
 
+---
 
-** It's still in progress **
+> **Note**: Le projet est encore en cours de développement.
