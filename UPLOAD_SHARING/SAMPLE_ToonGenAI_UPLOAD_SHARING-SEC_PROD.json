@@ -1,0 +1,27 @@
+{
+  "variables" : [ {
+    "name" : "x_consumer_key",
+    "value" : "abcdef",
+    "description" : ""
+  }, {
+    "name" : "x_consumer_secret",
+    "value" : "abcdef",
+    "description" : ""
+  }, {
+    "name" : "x_access_token",
+    "value" : "abcdef",
+    "description" : ""
+  }, {
+    "name" : "x_access_token_secret",
+    "value" : "abcdef",
+    "description" : ""
+  }, {
+    "name" : "dart_client_id",
+    "value" : "abcdef",
+    "description" : ""
+  }, {
+    "name" : "dart_client_secret",
+    "value" : "abcdef",
+    "description" : ""
+  } ]
+}

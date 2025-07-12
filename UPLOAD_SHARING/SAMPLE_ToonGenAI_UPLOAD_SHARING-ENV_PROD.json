@@ -1,0 +1,43 @@
+{
+  "variables" : [ {
+    "name" : "python_exe",
+    "value" : "python",
+    "description" : ""
+  }, {
+    "name" : "ai_upload_folder",
+    "value" : "C:\\AI_TEMP_UPLOAD\\_AI_UPLOAD",
+    "description" : ""
+  }, {
+    "name" : "x_upload_py",
+    "value" : "${PROJECT_HOME}\\UPLOAD_SHARING\\X\\scripts\\SCRIPT_PYTHON_UPLOAD_TO_X.py",
+    "description" : ""
+  }, {
+    "name" : "x_ai_upload_folder",
+    "value" : "C:\\AI_TEMP_UPLOAD\\_AI_UPLOAD_X",
+    "description" : ""
+  }, {
+    "name" : "x_dest_done_folder",
+    "value" : "C:\\AI_TEMP_UPLOAD\\_AI_UPLOAD_X\\done",
+    "description" : ""
+  }, {
+    "name" : "dart_upload_py",
+    "value" : "${PROJECT_HOME}\\UPLOAD_SHARING\\DART\\scripts\\SCRIPT_UPLOAD_TO_DART.py",
+    "description" : ""
+  }, {
+    "name" : "dart_ai_upload_folder",
+    "value" : "C:\\AI_TEMP_UPLOAD\\_AI_UPLOAD_DART",
+    "description" : ""
+  }, {
+    "name" : "dart_dest_done_folder",
+    "value" : "C:\\AI_TEMP_UPLOAD\\_AI_UPLOAD_DART\\done",
+    "description" : ""
+  }, {
+    "name" : "toongenai_folder",
+    "value" : "E:\\_TOONGENAI",
+    "description" : ""
+  }, {
+    "name" : "dart_redirect_uri",
+    "value" : "http://127.0.0.1:5088",
+    "description" : ""
+  } ]
+}
