@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <info>
+    <name>2_PROCESSING_TODO_FILES</name>
+    <name_sync_with_filename>Y</name_sync_with_filename>
+    <description/>
+    <extended_description/>
+    <pipeline_version/>
+    <pipeline_type>Normal</pipeline_type>
+    <pipeline_status>0</pipeline_status>
+    <parameters>
+    </parameters>
+    <capture_transform_performance>N</capture_transform_performance>
+    <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
+    <transform_performance_capturing_size_limit>100</transform_performance_capturing_size_limit>
+    <created_user>-</created_user>
+    <created_date>2023/10/07 14:49:50.895</created_date>
+    <modified_user>-</modified_user>
+    <modified_date>2023/10/07 14:49:50.895</modified_date>
+  </info>
+  <notepads>
+    <notepad>
+      <backgroundcolorblue>112</backgroundcolorblue>
+      <backgroundcolorgreen>205</backgroundcolorgreen>
+      <backgroundcolorred>255</backgroundcolorred>
+      <bordercolorblue>100</bordercolorblue>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorred>100</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>0</fontcolorblue>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorred>0</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>12</fontsize>
+      <height>30</height>
+      <xloc>448</xloc>
+      <yloc>64</yloc>
+      <note>FOLDERS</note>
+      <width>91</width>
+    </notepad>
+    <notepad>
+      <backgroundcolorblue>112</backgroundcolorblue>
+      <backgroundcolorgreen>205</backgroundcolorgreen>
+      <backgroundcolorred>255</backgroundcolorred>
+      <bordercolorblue>100</bordercolorblue>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorred>100</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>0</fontcolorblue>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorred>0</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>12</fontsize>
+      <height>30</height>
+      <xloc>672</xloc>
+      <yloc>256</yloc>
+      <note>TXT FILES</note>
+      <width>92</width>
+    </notepad>
+  </notepads>
+  <order>
+    <hop>
+      <from>Text file input TODO_FILES.csv</from>
+      <to>PREPARE Folder &amp; files</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>export txt files</from>
+      <to>URL.TXT</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>PREPARE Folder &amp; files</from>
+      <to>export txt files</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>export txt files</from>
+      <to>KEYWORDS.TXT</to>
+      <enabled>Y</enabled>
+    </hop>
+  </order>
+  <transform>
+    <name>KEYWORDS.TXT</name>
+    <type>TextFileOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <schema_definition/>
+    <separator/>
+    <enclosure/>
+    <enclosure_forced>N</enclosure_forced>
+    <enclosure_fix_disabled>N</enclosure_fix_disabled>
+    <header>N</header>
+    <footer>N</footer>
+    <format>DOS</format>
+    <compression>None</compression>
+    <encoding>windows-1257</encoding>
+    <endedLine/>
+    <fileNameInField>Y</fileNameInField>
+    <fileNameField>keywords_txt_filepath</fileNameField>
+    <create_parent_folder>N</create_parent_folder>
+    <file>
+      <name>file</name>
+      <servlet_output>N</servlet_output>
+      <do_not_open_new_file_init>Y</do_not_open_new_file_init>
+      <extention>txt</extention>
+      <append>N</append>
+      <split>N</split>
+      <haspartno>N</haspartno>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <SpecifyFormat>N</SpecifyFormat>
+      <date_time_format/>
+      <add_to_result_filenames>N</add_to_result_filenames>
+      <pad>N</pad>
+      <fast_dump>N</fast_dump>
+      <splitevery>0</splitevery>
+    </file>
+    <fields>
+      <field>
+        <name>KEYWORDS_txt</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>both</trim_type>
+        <roundingType>half_even</roundingType>
+        <length>-1</length>
+        <precision>-1</precision>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>704</xloc>
+      <yloc>464</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>PREPARE Folder &amp; files</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>
+      <jsScript>
+        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>
+//////////////////////////
+//--- INITIALISATION ---//
+//////////////////////////
+var file_oldname = path_local+"\\"+short_filename;
+var file_newname = path_local+"\\"+short_filename_new;
+
+var folder_to_create = path_local+"\\"+filename_folder_new;
+
+var url_txt_filepath = folder_to_create+"\\"+"URL";
+var keywords_txt_filepath = folder_to_create+"\\"+"KEYWORDS";
+
+var todofilename = "nothing";
+var todofolder   = "nothing";
+
+
+///////////////////////////////////
+//--- PROCESS FOLDERS &amp; FILES ---//
+///////////////////////////////////
+
+// Renommage fichiers safetensors
+if (!(fileExists(file_newname))){
+	todofilename = "renommer";
+	moveFile(file_oldname,file_newname,false);
+}
+
+// Creation de dossiers ayant le même nom que file_newname
+if (!(isFolder(folder_to_create))){
+	todofolder = "creation dossier";
+	createFolder(folder_to_create);
+}</jsScript_script>
+      </jsScript>
+      <jsScript>
+        <jsScript_type>-1</jsScript_type>
+        <jsScript_name>fileExists_Sample</jsScript_name>
+        <jsScript_script>// Checks the existens of a File.
+// 
+// Usage:
+// fileExists(var);
+// 1: String - The Filename with Path.
+//
+// 2006-11-15
+//
+
+var strFile = "Your File, with Path.";
+Alert(fileExists(strFile));</jsScript_script>
+      </jsScript>
+      <jsScript>
+        <jsScript_type>-1</jsScript_type>
+        <jsScript_name>moveFile_Sample</jsScript_name>
+        <jsScript_script>// moveFile a file.
+// 
+// Usage:
+// moveFile(var1,var2,var3);
+// 1: String - The file to move with Path.
+// 2: String - The destination filename with Path.
+// 3: Boolean- Overwrite destination file if exists.
+// 2007-10-29
+//
+var sourcefile="your source filename with path";
+var destinationfile="your destination filename with path";
+moveFile(sourcefile,destinationfile,false);</jsScript_script>
+      </jsScript>
+      <jsScript>
+        <jsScript_type>-1</jsScript_type>
+        <jsScript_name>isFolder_Sample</jsScript_name>
+        <jsScript_script>
+// 
+// Usage:
+// isFolder(var1);
+// 1: String - The folder to check
+// The result is a boolean (true or false)
+// 2007-10-29
+//
+var sourcefile="your source foldername with path";
+isFolder(sourcefile);</jsScript_script>
+      </jsScript>
+      <jsScript>
+        <jsScript_type>-1</jsScript_type>
+        <jsScript_name>createFolder_Sample</jsScript_name>
+        <jsScript_script>// Create a folder.
+// 
+// Usage:
+// createFolder(var);
+// 1: String - The Foldername with Path.
+// 2007-10-29
+//
+
+var strFolder = "Your Folder, with Path.";
+createFolder(strFolder);</jsScript_script>
+      </jsScript>
+    </jsScripts>
+    <fields>
+      <field>
+        <name>file_oldname</name>
+        <rename>file_oldname</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>file_newname</name>
+        <rename>file_newname</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>folder_to_create</name>
+        <rename>folder_to_create</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>url_txt_filepath</name>
+        <rename>url_txt_filepath</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>keywords_txt_filepath</name>
+        <rename>keywords_txt_filepath</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>todofilename</name>
+        <rename>todofilename</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>todofolder</name>
+        <rename>todofolder</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>480</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Text file input TODO_FILES.csv</name>
+    <type>TextFileInput2</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <accept_filenames>N</accept_filenames>
+    <passing_through_fields>N</passing_through_fields>
+    <accept_field/>
+    <accept_transform_name/>
+    <separator>;</separator>
+    <enclosure>"</enclosure>
+    <enclosure_breaks>N</enclosure_breaks>
+    <escapechar/>
+    <header>Y</header>
+    <prependFileName>N</prependFileName>
+    <nr_headerlines>1</nr_headerlines>
+    <footer>N</footer>
+    <nr_footerlines>1</nr_footerlines>
+    <line_wrapped>N</line_wrapped>
+    <nr_wraps>1</nr_wraps>
+    <layout_paged>N</layout_paged>
+    <nr_lines_per_page>80</nr_lines_per_page>
+    <nr_lines_doc_header>0</nr_lines_doc_header>
+    <noempty>Y</noempty>
+    <include>N</include>
+    <include_field/>
+    <rownum>N</rownum>
+    <rownumByFile>N</rownumByFile>
+    <rownum_field/>
+    <format>DOS</format>
+    <encoding/>
+    <length>Characters</length>
+    <add_to_result_filenames>Y</add_to_result_filenames>
+    <file>
+      <name>${path_safetensors_files}</name>
+      <filemask>TODO_FILES.csv</filemask>
+      <exclude_filemask/>
+      <file_required>N</file_required>
+      <include_subfolders>N</include_subfolders>
+      <type>CSV</type>
+      <compression>None</compression>
+    </file>
+    <filters>
+    </filters>
+    <fields>
+      <field>
+        <name>path_local</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+      <field>
+        <name>short_filename</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+      <field>
+        <name>short_filename_new</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+      <field>
+        <name>filename_folder_new</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+      <field>
+        <name>URL_txt</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+      <field>
+        <name>KEYWORDS_txt</name>
+        <type>String</type>
+        <format/>
+        <currency>$</currency>
+        <decimal>.</decimal>
+        <group>,</group>
+        <nullif>-</nullif>
+        <ifnull/>
+        <position>-1</position>
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>both</trim_type>
+        <repeat>N</repeat>
+      </field>
+    </fields>
+    <limit>0</limit>
+    <error_ignored>N</error_ignored>
+    <skip_bad_files>N</skip_bad_files>
+    <file_error_field/>
+    <file_error_message_field/>
+    <error_line_skipped>N</error_line_skipped>
+    <error_count_field/>
+    <error_fields_field/>
+    <error_text_field/>
+    <schema_definition/>
+    <bad_line_files_destination_directory/>
+    <bad_line_files_extension>warning</bad_line_files_extension>
+    <error_line_files_destination_directory/>
+    <error_line_files_extension>error</error_line_files_extension>
+    <line_number_files_destination_directory/>
+    <line_number_files_extension>line</line_number_files_extension>
+    <date_format_lenient>Y</date_format_lenient>
+    <date_format_locale>en_US</date_format_locale>
+    <shortFileFieldName/>
+    <pathFieldName/>
+    <hiddenFieldName/>
+    <lastModificationTimeFieldName/>
+    <uriNameFieldName/>
+    <rootUriNameFieldName/>
+    <extensionFieldName/>
+    <sizeFieldName/>
+    <attributes/>
+    <GUI>
+      <xloc>176</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>URL.TXT</name>
+    <type>TextFileOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <schema_definition/>
+    <separator/>
+    <enclosure/>
+    <enclosure_forced>N</enclosure_forced>
+    <enclosure_fix_disabled>N</enclosure_fix_disabled>
+    <header>N</header>
+    <footer>N</footer>
+    <format>DOS</format>
+    <compression>None</compression>
+    <encoding>windows-1257</encoding>
+    <endedLine/>
+    <fileNameInField>Y</fileNameInField>
+    <fileNameField>url_txt_filepath</fileNameField>
+    <create_parent_folder>N</create_parent_folder>
+    <file>
+      <name>file</name>
+      <servlet_output>N</servlet_output>
+      <do_not_open_new_file_init>Y</do_not_open_new_file_init>
+      <extention>txt</extention>
+      <append>N</append>
+      <split>N</split>
+      <haspartno>N</haspartno>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <SpecifyFormat>N</SpecifyFormat>
+      <date_time_format/>
+      <add_to_result_filenames>N</add_to_result_filenames>
+      <pad>N</pad>
+      <fast_dump>N</fast_dump>
+      <splitevery>0</splitevery>
+    </file>
+    <fields>
+      <field>
+        <name>URL_txt</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>both</trim_type>
+        <roundingType>half_even</roundingType>
+        <length>-1</length>
+        <precision>-1</precision>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>704</xloc>
+      <yloc>336</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>export txt files</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <length>-2</length>
+        <name>URL_txt</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>KEYWORDS_txt</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>url_txt_filepath</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>keywords_txt_filepath</name>
+        <precision>-2</precision>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>480</xloc>
+      <yloc>336</yloc>
+    </GUI>
+  </transform>
+  <transform_error_handling>
+  </transform_error_handling>
+  <attributes/>
+</pipeline>
