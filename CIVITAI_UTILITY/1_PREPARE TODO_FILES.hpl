@@ -19,6 +19,29 @@
     <modified_date>2023/10/06 21:19:11.401</modified_date>
   </info>
   <notepads>
+    <notepad>
+      <backgroundcolorblue>251</backgroundcolorblue>
+      <backgroundcolorgreen>232</backgroundcolorgreen>
+      <backgroundcolorred>201</backgroundcolorred>
+      <bordercolorblue>90</bordercolorblue>
+      <bordercolorgreen>58</bordercolorgreen>
+      <bordercolorred>14</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>90</fontcolorblue>
+      <fontcolorgreen>58</fontcolorgreen>
+      <fontcolorred>14</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>9</fontsize>
+      <height>73</height>
+      <xloc>528</xloc>
+      <yloc>336</yloc>
+      <note>example of filenames expected : 
+CF.SkeletonKnight-ILXL_Ariane.1201834.safetensors
+
+&lt;lora_kind>.&lt;anime_show>-&lt;ILXL_or_whatever>_&lt;name_of_char>.&lt;url_number>.safetensor</note>
+      <width>504</width>
+    </notepad>
   </notepads>
   <order>
     <hop>
