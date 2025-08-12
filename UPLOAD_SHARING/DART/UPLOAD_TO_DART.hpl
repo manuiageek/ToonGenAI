@@ -16,7 +16,7 @@
       </parameter>
       <parameter>
         <name>dart_name_param</name>
-        <default_value>#Mihoshi #TenchiMuyo #AIFANART</default_value>
+        <default_value>#Ryoko #TenchiMuyo #AIFANART</default_value>
         <description>#Helena #DeadOrAlive #AIFANART</description>
       </parameter>
     </parameters>

@@ -11,7 +11,7 @@
     <parameters>
       <parameter>
         <name>twitter_message_param</name>
-        <default_value>#HikariHazakura #NandeKokoniSenseiGa #AIFANART</default_value>
+        <default_value>#Rita #SkeletonKnight #AIFANART</default_value>
         <description/>
       </parameter>
     </parameters>

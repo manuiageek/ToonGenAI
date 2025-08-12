@@ -1,0 +1,33 @@
+1_video_processing : 
+--------------------
+- 1_rename_video_files
+├── Get Files (*.mkv, *.mp4, *.avi, *.mpg)
+├── Sort Rows (by filename)
+├── Add sequence (counter: 01, 02, 03...)
+├── Calculator (new_filename = ${counter} + ${extension})
+└── Move/Rename Files
+- 2_extract_frames
+├── Get Files (fichiers vidéo renommés)
+├── Create folder (même nom que vidéo)
+└── Execute process: 
+    Command: ffmpeg
+    Args: -i ${video_path} -vf fps=18,select=not(mod(n\,5)) -q:v 1 ${output_dir}/frame_%08d.jpg
+- 3_remove duplicates
+├── Get Files (*.jpg dans tous sous-dossiers)
+├── File Hash (MD5/SHA256 natif Hop)
+├── Group By (hash)
+├── Filter Rows (count > 1)
+└── Delete File (garder le premier, supprimer les autres)
+2_get_images :
+---------------------------
+Creation répertoire "_characters" (si non existant)
+- 1_get_character_image : JSOUP ? 
+- 2_caption_images : COMFYUI + IA
+3_select_character_images (_selection) :
+----------------------------------------
+Creation répertoire "_selection" (si non existant)
+categorize_images : COMFYUI + IA + comparaison
+- nom_character
+- 1person (ni boy ni girl)
+- 1boy
+- 1girl

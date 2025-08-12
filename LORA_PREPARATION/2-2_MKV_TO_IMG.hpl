@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <info>
+    <name>2-2_MKV_TO_IMG</name>
+    <name_sync_with_filename>Y</name_sync_with_filename>
+    <description/>
+    <extended_description/>
+    <pipeline_version/>
+    <pipeline_type>Normal</pipeline_type>
+    <pipeline_status>0</pipeline_status>
+    <parameters>
+      <parameter>
+        <name>anime_folder_param</name>
+        <default_value>T:\_SELECT\TODO\Danjo no Yuujou wa Seiritsu suru</default_value>
+        <description/>
+      </parameter>
+    </parameters>
+    <capture_transform_performance>N</capture_transform_performance>
+    <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
+    <transform_performance_capturing_size_limit>100</transform_performance_capturing_size_limit>
+    <created_user>-</created_user>
+    <created_date>2025/07/29 18:48:53.274</created_date>
+    <modified_user>-</modified_user>
+    <modified_date>2025/07/29 18:48:53.274</modified_date>
+  </info>
+  <notepads>
+  </notepads>
+  <order>
+    <hop>
+      <from>Get file names</from>
+      <to>Select Info_Files</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Select Info_Files</from>
+      <to>Sort by short_filename</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort by short_filename</from>
+      <to>cmd_exec info</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>cmd_exec info</from>
+      <to>Execute a process</to>
+      <enabled>Y</enabled>
+    </hop>
+  </order>
+  <transform>
+    <name>Execute a process</name>
+    <type>ExecProcess</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <argumentFields>
+      <argumentField>
+        <argumentFieldName>cmd_option</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>cmd_ffmpeg_complete</argumentFieldName>
+      </argumentField>
+    </argumentFields>
+    <argumentsInFields>Y</argumentsInFields>
+    <errorfieldname>Error output</errorfieldname>
+    <exitvaluefieldname>Exit value</exitvaluefieldname>
+    <failwhennotsuccess>Y</failwhennotsuccess>
+    <outputlinedelimiter/>
+    <processfield>cmd_exec</processfield>
+    <resultfieldname>Result output</resultfieldname>
+    <attributes/>
+    <GUI>
+      <xloc>640</xloc>
+      <yloc>240</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Get file names</name>
+    <type>GetFileNames</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <doNotFailIfNoFile>N</doNotFailIfNoFile>
+    <dynamic_include_subfolders>N</dynamic_include_subfolders>
+    <file>
+      <file_required>N</file_required>
+      <filemask>.*\.mkv</filemask>
+      <include_subfolders>Y</include_subfolders>
+      <name>${anime_folder_param}</name>
+    </file>
+    <filefield>N</filefield>
+    <filter>
+      <filterfiletype>all_files</filterfiletype>
+    </filter>
+    <isaddresult>Y</isaddresult>
+    <limit>0</limit>
+    <raiseAnExceptionIfNoFile>N</raiseAnExceptionIfNoFile>
+    <rownum>N</rownum>
+    <attributes/>
+    <GUI>
+      <xloc>112</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Select Info_Files</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <length>-2</length>
+        <name>filename</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>short_filename</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>path</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>type</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>exists</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>ishidden</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>isreadable</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>iswriteable</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>lastmodifiedtime</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>size</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>extension</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>uri</name>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <length>-2</length>
+        <name>rooturi</name>
+        <precision>-2</precision>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>272</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Sort by short_filename</name>
+    <type>SortRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <compress>N</compress>
+    <directory>${java.io.tmpdir}</directory>
+    <fields>
+      <field>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <name>short_filename</name>
+        <presorted>N</presorted>
+      </field>
+    </fields>
+    <sort_prefix>out</sort_prefix>
+    <sort_size>1000000</sort_size>
+    <unique_rows>N</unique_rows>
+    <attributes/>
+    <GUI>
+      <xloc>448</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>cmd_exec info</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>
+      <jsScript>
+        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>
+function removeExtension(filename) {
+    var lastDotPosition = filename.lastIndexOf(".");
+    if (lastDotPosition === -1) {
+        return filename; // Pas d'extension trouvée
+    } else {
+        return filename.substr(0, lastDotPosition);
+    }
+}
+
+var cmd_exec           = "cmd";
+var cmd_option         = "/c";
+var cmd_ffmpeg         = "ffmpeg -loglevel error -y";
+var cmd_ffmpeg_option1 = '-i "' + filename + '"';
+var cmd_ffmpeg_option2 = "-vf";
+var cmd_ffmpeg_option3 = '"fps=18,select=not(mod(n\\,5))"';  
+var cmd_ffmpeg_option4 = "-q:v";
+var cmd_ffmpeg_option5 = "1";
+var cmd_ffmpeg_option6 = "-fps_mode";
+var cmd_ffmpeg_option7 = "vfr";
+var cmd_ffmpeg_option8 = '"'+removeExtension(filename)+ '\\frame_%08d.jpg"';
+
+
+var cmd_ffmpeg_complete = cmd_ffmpeg + " " + cmd_ffmpeg_option1 + " " + cmd_ffmpeg_option2 + " " + cmd_ffmpeg_option3 + " " + cmd_ffmpeg_option4 + " " + cmd_ffmpeg_option5 + " " + cmd_ffmpeg_option6 + " " + cmd_ffmpeg_option7 + " " + cmd_ffmpeg_option8;</jsScript_script>
+      </jsScript>
+    </jsScripts>
+    <fields>
+      <field>
+        <name>cmd_exec</name>
+        <rename>cmd_exec</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>cmd_option</name>
+        <rename>cmd_option</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+      <field>
+        <name>cmd_ffmpeg_complete</name>
+        <rename>cmd_ffmpeg_complete</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>448</xloc>
+      <yloc>240</yloc>
+    </GUI>
+  </transform>
+  <transform_error_handling>
+  </transform_error_handling>
+  <attributes/>
+</pipeline>
