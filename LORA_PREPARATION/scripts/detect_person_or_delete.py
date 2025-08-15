@@ -12,7 +12,7 @@ import logging
 from collections import deque
 import time
 
-# Configuration logging minimal
+# Configuration logging minimal (prints will handle verbosity for user feedback)
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -121,12 +121,16 @@ class StreamingGPUAnimeDetector:
                         anime_mask = classes_tensor == self.config.anime_class_id
                         anime_detected = anime_mask.any().item()
 
+                # Affiche l'image en cours et l'action réalisée
+                print(f"Traitement: {paths_batch[i]}")
+
                 if not anime_detected:
                     self._safe_delete_image(paths_batch[i])
+                    print(f"SUPPRIMÉ: {paths_batch[i]} (aucune personne/anime détectée)")
                     self.stats['deleted'] += 1
                 else:
                     self.stats['kept'] += 1
-                
+
                 self.stats['processed'] += 1
                     
             except Exception as e:
@@ -229,6 +233,8 @@ def main():
         return
 
     try:
+        # Affiche le répertoire sélectionné en entête d'exécution
+        print(f"Répertoire à traiter: {args.directory}")
         config = GPUAnimeDetectionConfig()
         
         if args.batch_size:
@@ -244,6 +250,8 @@ def main():
         
         # Traitement en flux continu
         for img, image_path in detector.get_streaming_image_generator(args.directory):
+            # Affiche le fichier en cours de mise en lot (avant inférence)
+            print(f"Mise en lot: {image_path}")
             images_batch.append(img)
             paths_batch.append(image_path)
             
