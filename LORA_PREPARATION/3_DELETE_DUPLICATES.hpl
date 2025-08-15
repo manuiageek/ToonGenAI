@@ -11,7 +11,7 @@
     <parameters>
       <parameter>
         <name>anime_folder_param</name>
-        <default_value>T:\_SELECT\TODO\Kanpekiseijo\01</default_value>
+        <default_value>D:\ISEKAI MAOU\_temp2\06</default_value>
         <description/>
       </parameter>
     </parameters>
@@ -27,13 +27,23 @@
   </notepads>
   <order>
     <hop>
+      <from>Get variables</from>
+      <to>python_options</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
       <from>python_options</from>
+      <to>LOG_BEFORE</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>LOG_BEFORE</from>
       <to>Execute a process</to>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Get variables</from>
-      <to>python_options</to>
+      <from>Execute a process</from>
+      <to>LOG_AFTER</to>
       <enabled>Y</enabled>
     </hop>
   </order>
@@ -50,22 +60,37 @@
     </partitioning>
     <argumentFields>
       <argumentField>
+        <argumentFieldName>cmd_exe_c</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>cmd_exe_start</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>python_exe</argumentFieldName>
+      </argumentField>
+      <argumentField>
+        <argumentFieldName>python_option_u</argumentFieldName>
+      </argumentField>
+      <argumentField>
         <argumentFieldName>delete_duplicate_py_param</argumentFieldName>
       </argumentField>
       <argumentField>
         <argumentFieldName>python_option</argumentFieldName>
       </argumentField>
+      <argumentField>
+        <argumentFieldName>anime_folder_param</argumentFieldName>
+      </argumentField>
     </argumentFields>
     <argumentsInFields>Y</argumentsInFields>
-    <errorfieldname>Error output</errorfieldname>
-    <exitvaluefieldname>Exit value</exitvaluefieldname>
+    <errorfieldname>stderr</errorfieldname>
+    <exitvaluefieldname>exit_code</exitvaluefieldname>
     <failwhennotsuccess>Y</failwhennotsuccess>
-    <outputlinedelimiter/>
-    <processfield>python_exe</processfield>
-    <resultfieldname>Result output</resultfieldname>
+    <outputlinedelimiter>$[0D,0A]</outputlinedelimiter>
+    <processfield>cmd_exe</processfield>
+    <resultfieldname>stdout</resultfieldname>
     <attributes/>
     <GUI>
-      <xloc>544</xloc>
+      <xloc>640</xloc>
       <yloc>128</yloc>
     </GUI>
   </transform>
@@ -82,6 +107,10 @@
     </partitioning>
     <fields>
       <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
         <length>-1</length>
         <name>anime_folder_param</name>
         <precision>-1</precision>
@@ -90,6 +119,10 @@
         <variable>${anime_folder_param}</variable>
       </field>
       <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
         <length>-1</length>
         <name>delete_duplicate_py_param</name>
         <precision>-1</precision>
@@ -98,6 +131,10 @@
         <variable>${delete_duplicate_py}</variable>
       </field>
       <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
         <length>-1</length>
         <name>python_exe</name>
         <precision>-1</precision>
@@ -105,10 +142,138 @@
         <type>String</type>
         <variable>${python_exe}</variable>
       </field>
+      <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
+        <length>-1</length>
+        <name>python_option_u</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${python_option_u}</variable>
+      </field>
+      <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
+        <length>-1</length>
+        <name>cmd_exe</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${cmd_exe}</variable>
+      </field>
+      <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
+        <length>-1</length>
+        <name>cmd_exe_c</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${cmd_exe_c}</variable>
+      </field>
+      <field>
+        <currency/>
+        <decimal/>
+        <format/>
+        <group/>
+        <length>-1</length>
+        <name>cmd_exe_start</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${cmd_exe_start}</variable>
+      </field>
     </fields>
     <attributes/>
     <GUI>
       <xloc>176</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>LOG_AFTER</name>
+    <type>WriteToLog</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <displayHeader>Y</displayHeader>
+    <fields>
+      <field>
+        <name>stdout</name>
+      </field>
+      <field>
+        <name>stderr</name>
+      </field>
+      <field>
+        <name>exit_code</name>
+      </field>
+    </fields>
+    <limitRows>N</limitRows>
+    <limitRowsNumber>0</limitRowsNumber>
+    <loglevel>Basic</loglevel>
+    <attributes/>
+    <GUI>
+      <xloc>784</xloc>
+      <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>LOG_BEFORE</name>
+    <type>WriteToLog</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <displayHeader>Y</displayHeader>
+    <fields>
+      <field>
+        <name>anime_folder_param</name>
+      </field>
+      <field>
+        <name>delete_duplicate_py_param</name>
+      </field>
+      <field>
+        <name>python_exe</name>
+      </field>
+      <field>
+        <name>python_option_u</name>
+      </field>
+      <field>
+        <name>cmd_exe</name>
+      </field>
+      <field>
+        <name>cmd_exe_c</name>
+      </field>
+      <field>
+        <name>cmd_exe_start</name>
+      </field>
+      <field>
+        <name>python_option</name>
+      </field>
+    </fields>
+    <limitRows>N</limitRows>
+    <limitRowsNumber>0</limitRowsNumber>
+    <loglevel>Basic</loglevel>
+    <logmessage/>
+    <attributes/>
+    <GUI>
+      <xloc>496</xloc>
       <yloc>128</yloc>
     </GUI>
   </transform>
@@ -130,7 +295,9 @@
         <jsScript_name>Script 1</jsScript_name>
         <jsScript_script>
 
-var python_option      = '--directory="'+anime_folder_param+'"';</jsScript_script>
+var python_option      = '--directory';
+
+</jsScript_script>
       </jsScript>
       <jsScript>
         <jsScript_type>-1</jsScript_type>

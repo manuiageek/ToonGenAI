@@ -23,8 +23,8 @@ from PIL import Image
 HASH_SIZE = 16  # Taille du hash perceptuel
 PERCEPTUAL_THRESHOLD = 3  # Seuil de difference pour hash perceptuel (augmente)
 SIZE_DIFFERENCE_RATIO = 0.1  # 10% de difference de taille max pour comparer
-CACHE_FILE = Path("image_hashes_cache.lz4")
-WORKERS = min(32, (os.cpu_count() or 4) * 2)
+CACHE_FILE = Path(r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\image_hashes_cache.lz4")
+WORKERS = min(4, (os.cpu_count() or 4) * 2)
 BATCH_SIZE = 500
 MAX_GROUP_SIZE = 100
 CACHE_VERSION = "v7"
@@ -420,7 +420,7 @@ def deduplicate_images(images: List[Path], cache: EnhancedCache, threshold: int 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Detecteur de doublons d'images ameliore")
     parser.add_argument("--directory", type=Path, 
-                       default=Path(r"T:\_SELECT\READY\TENCHI MUYO"),
+                       default=Path(r"D:\SHUUMATSU NO WALKURE"),
                        help="Repertoire a analyser")
     parser.add_argument("--clear-cache", action="store_true", 
                        help="Efface le cache avant de commencer")

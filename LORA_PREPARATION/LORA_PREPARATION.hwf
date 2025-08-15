@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\TODO\Danjo no Yuujou wa Seiritsu suru</default_value>
+      <default_value>D:\ISEKAI MAOU\_temp2\07</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -52,7 +52,7 @@
       <parameters>
         <parameter>
           <name>anime_folder_param</name>
-          <stream_name>${anime_folder_param}</stream_name>
+          <value>${anime_folder_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>
       </parameters>
@@ -82,7 +82,7 @@
       <parameters>
         <parameter>
           <name>anime_folder_param</name>
-          <stream_name>${anime_folder_param}</stream_name>
+          <value>${anime_folder_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>
       </parameters>
@@ -112,7 +112,7 @@
       <parameters>
         <parameter>
           <name>anime_folder_param</name>
-          <stream_name>${anime_folder_param}</stream_name>
+          <value>${anime_folder_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>
       </parameters>
@@ -138,14 +138,11 @@
       <create_parent_folder>N</create_parent_folder>
       <exec_per_row>N</exec_per_row>
       <filename>${PROJECT_HOME}/LORA_PREPARATION/3_DELETE_DUPLICATES.hpl</filename>
-      <logext/>
-      <logfile/>
       <loglevel>Basic</loglevel>
       <parameters>
         <parameter>
           <name>anime_folder_param</name>
-          <stream_name>${anime_folder_param}</stream_name>
-          <value/>
+          <value>${anime_folder_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>
       </parameters>
