@@ -1,0 +1,11 @@
+{
+  "variables" : [ {
+    "name" : "path_safetensors_files",
+    "value" : "E:\\AI_WORK\\loras_new",
+    "description" : ""
+  }, {
+    "name" : "url_civitai_com_models",
+    "value" : "https://civitai.com/models/",
+    "description" : ""
+  } ]
+}

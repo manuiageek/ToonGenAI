@@ -1,0 +1,27 @@
+{
+  "variables" : [ {
+    "name" : "python_exe",
+    "value" : "C:\\Users\\Utilisateur\\miniconda3\\python.exe",
+    "description" : ""
+  }, {
+    "name" : "delete_duplicate_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\delete_duplicate_images.py",
+    "description" : ""
+  }, {
+    "name" : "python_option_u",
+    "value" : "-u",
+    "description" : ""
+  }, {
+    "name" : "cmd_exe",
+    "value" : "C:\\Windows\\System32\\cmd.exe",
+    "description" : ""
+  }, {
+    "name" : "cmd_exe_c",
+    "value" : "/c",
+    "description" : ""
+  }, {
+    "name" : "cmd_exe_start",
+    "value" : "start",
+    "description" : ""
+  } ]
+}

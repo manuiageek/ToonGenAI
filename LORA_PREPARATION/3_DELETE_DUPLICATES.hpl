@@ -107,10 +107,6 @@
     </partitioning>
     <fields>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>anime_folder_param</name>
         <precision>-1</precision>
@@ -119,10 +115,6 @@
         <variable>${anime_folder_param}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>delete_duplicate_py_param</name>
         <precision>-1</precision>
@@ -131,10 +123,6 @@
         <variable>${delete_duplicate_py}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>python_exe</name>
         <precision>-1</precision>
@@ -143,10 +131,6 @@
         <variable>${python_exe}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>python_option_u</name>
         <precision>-1</precision>
@@ -155,10 +139,6 @@
         <variable>${python_option_u}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>cmd_exe</name>
         <precision>-1</precision>
@@ -167,10 +147,6 @@
         <variable>${cmd_exe}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>cmd_exe_c</name>
         <precision>-1</precision>
@@ -179,10 +155,6 @@
         <variable>${cmd_exe_c}</variable>
       </field>
       <field>
-        <currency/>
-        <decimal/>
-        <format/>
-        <group/>
         <length>-1</length>
         <name>cmd_exe_start</name>
         <precision>-1</precision>
@@ -270,7 +242,6 @@
     <limitRows>N</limitRows>
     <limitRowsNumber>0</limitRowsNumber>
     <loglevel>Basic</loglevel>
-    <logmessage/>
     <attributes/>
     <GUI>
       <xloc>496</xloc>

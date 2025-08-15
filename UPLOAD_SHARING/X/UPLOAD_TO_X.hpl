@@ -245,7 +245,7 @@ switch (idx_filename) {
     <errorfieldname>stderr</errorfieldname>
     <exitvaluefieldname>Exit value</exitvaluefieldname>
     <failwhennotsuccess>Y</failwhennotsuccess>
-    <outputlinedelimiter/>
+    <outputlinedelimiter>$[0D,0A]</outputlinedelimiter>
     <processfield>python_exe</processfield>
     <resultfieldname>stdout</resultfieldname>
     <attributes/>
