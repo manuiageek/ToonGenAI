@@ -8,6 +8,10 @@
     "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\delete_duplicate_images.py",
     "description" : ""
   }, {
+    "name" : "delete_non_person_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_person_or_delete.py",
+    "description" : ""
+  }, {
     "name" : "python_option_u",
     "value" : "-u",
     "description" : ""
@@ -22,6 +26,30 @@
   }, {
     "name" : "cmd_exe_start",
     "value" : "start",
+    "description" : ""
+  }, {
+    "name" : "python_option_directory",
+    "value" : "--directory",
+    "description" : ""
+  }, {
+    "name" : "conda_exe",
+    "value" : "C:\\Users\\Utilisateur\\miniconda3\\Scripts\\conda.exe",
+    "description" : ""
+  }, {
+    "name" : "conda_exe_run",
+    "value" : "run",
+    "description" : ""
+  }, {
+    "name" : "conda_exe_n",
+    "value" : "-n",
+    "description" : ""
+  }, {
+    "name" : "conda_ptorch_env",
+    "value" : "ptorch_env",
+    "description" : ""
+  }, {
+    "name" : "conda_python",
+    "value" : "python",
     "description" : ""
   } ]
 }
