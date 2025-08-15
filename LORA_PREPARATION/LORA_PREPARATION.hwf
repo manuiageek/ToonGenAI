@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\ISEKAI MAOU\_temp2\07</default_value>
+      <default_value>D:\ISEKAI MAOU\_temp2\08</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -168,13 +168,10 @@
       <create_parent_folder>N</create_parent_folder>
       <exec_per_row>N</exec_per_row>
       <filename>${PROJECT_HOME}/LORA_PREPARATION/4_DELETE_NON_PERSON.hpl</filename>
-      <logext/>
-      <logfile/>
       <loglevel>Basic</loglevel>
       <parameters>
         <parameter>
           <name>anime_folder_param</name>
-          <stream_name/>
           <value>${anime_folder_param}</value>
         </parameter>
         <pass_all_parameters>N</pass_all_parameters>

@@ -48,6 +48,10 @@
     "value" : "ptorch_env",
     "description" : ""
   }, {
+    "name" : "conda_no_capture_output",
+    "value" : "--no-capture-output",
+    "description" : ""
+  }, {
     "name" : "conda_python",
     "value" : "python",
     "description" : ""

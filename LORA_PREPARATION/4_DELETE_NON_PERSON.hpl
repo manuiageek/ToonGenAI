@@ -73,6 +73,9 @@
         <argumentFieldName>conda_ptorch_env</argumentFieldName>
       </argumentField>
       <argumentField>
+        <argumentFieldName>conda_no_capture_output</argumentFieldName>
+      </argumentField>
+      <argumentField>
         <argumentFieldName>conda_python</argumentFieldName>
       </argumentField>
       <argumentField>
@@ -197,6 +200,14 @@
         <trim_type>none</trim_type>
         <type>String</type>
         <variable>${conda_python}</variable>
+      </field>
+      <field>
+        <length>-1</length>
+        <name>conda_no_capture_output</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${conda_no_capture_output}</variable>
       </field>
     </fields>
     <attributes/>
