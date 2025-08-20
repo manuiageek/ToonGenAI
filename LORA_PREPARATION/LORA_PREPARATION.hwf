@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\ISEKAI MAOU\_temp2\08</default_value>
+      <default_value>T:\_SELECT\READY\GUY DOUBLE TARGET</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -226,7 +226,7 @@
     <hop>
       <from>Start</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
