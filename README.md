@@ -30,7 +30,7 @@ sauvegarder sous : CF.SkeletonKnight-ILXL_Ariane.1201834.safetensors
 
 ## REQUIREMENTS :
 
-### GPU ACCELERATION :
+### PYTORCH :
 
 For gpu acceleration, use miniconda : https://docs.anaconda.com/miniconda/
 PYTORCH CONDA GUIDE :
@@ -41,7 +41,7 @@ pip install numpy opencv-python ultralytics
 
 Exemple : conda run -n ptorch_env python 4_PT_detect_person_or_delete.py
 
-### TENSORFLOW CONDA GUIDE :
+### TENSORFLOW :
 
 conda create -n tflow_env python=3.10
 conda activate tflow_env
@@ -51,6 +51,15 @@ pip install numpy pillow tensorflow-io deepdanbooru psutil
 
 check TensorFlow GPU :
 python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+
+### ONNX :
+conda create -n onnx_env python=3.10
+conda activate onnx_env
+conda install -c nvidia/label/cuda-12.6.0 cuda-toolkit
+conda install -c conda-forge cudnn=9.3.1
+pip install onnxruntime-gpu
+pip install --upgrade "onnxruntime-gpu[cuda,cudnn]"
+
 
 ### NODEJS :
 
