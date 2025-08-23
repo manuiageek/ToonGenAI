@@ -4,10 +4,11 @@ import time
 import logging
 import numpy as np
 import onnxruntime as ort
+from pydantic import BaseModel
 from PIL import Image, UnidentifiedImageError
 import csv
 from fastapi import FastAPI
-from typing import List, Dict
+from typing import List
 import uvicorn
 
 # ==================== CONFIG ====================
@@ -207,7 +208,7 @@ class WD14Tagger:
         input_name = self.session.get_inputs()[0].name
         outputs = self.session.run(None, {input_name: input_tensor})
         probs = outputs[0]
-        if probs.ndim > 1 and probs.shape[0] == 1:
+        if hasattr(probs, "ndim") and probs.ndim > 1 and probs.shape[0] == 1:
             probs = probs[0]
 
         scored = []
@@ -216,7 +217,6 @@ class WD14Tagger:
             if self._apply_thresholds(tag, s):
                 scored.append((self._clean_tag(tag), s))
 
-        # Tri desc par score, puis ne garder que les noms
         scored.sort(key=lambda x: x[1], reverse=True)
         return [t for t, _ in scored]
 
@@ -224,9 +224,12 @@ class WD14Tagger:
 app = FastAPI()
 tagger = WD14Tagger()
 
-@app.get("/getwdtags")
-def get_tags(image_path: str) -> List[str]:
-    return tagger.process(image_path)
+class TagsResponse(BaseModel):
+    tags: List[str]
+
+@app.get("/getwdtags", response_model=TagsResponse)
+def get_tags(image_path: str) -> TagsResponse:
+    return TagsResponse(tags=tagger.process(image_path))
 
 # ==================== SELF TEST ====================
 def self_test() -> None:
@@ -244,7 +247,8 @@ def self_test() -> None:
         topk = 20
         if topk and topk > 0:
             tags = tags[:topk]
-        print(json.dumps(tags, ensure_ascii=False, indent=2))
+        payload = {"tags": tags}
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
         logger.info("Self-test OK")
     except Exception:
         logger.exception("Self-test en échec")
