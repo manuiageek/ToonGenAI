@@ -243,7 +243,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>560</yloc>
+      <yloc>544</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -328,7 +328,7 @@
     <hop>
       <from>Start</from>
       <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
