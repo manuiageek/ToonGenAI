@@ -33,9 +33,9 @@ FORCE_CPU = False
 
 # SQLite
 DB_FILENAME = "SQLLITE.db"  # nom fixe du fichier
-SQLITE_QUERY = "select image_path from images limit 20"
+SQLITE_QUERY = "select image_path from images"
 SQLITE_TABLE = "images"
-SQLITE_TAGS_COLUMN = "detect_wdtag"
+SQLITE_TAGS_COLUMN = "detect_wdtags"
 BATCH_COMMIT_SIZE = 1000  # commit par lots
 
 # ==================== LOGGING ====================

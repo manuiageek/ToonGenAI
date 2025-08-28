@@ -13,7 +13,7 @@
     "description" : ""
   }, {
     "name" : "detect_wdtag_gpu_py",
-    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_wdtag_gpu.py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_wdtags_gpu.py",
     "description" : ""
   }, {
     "name" : "python_option_u",

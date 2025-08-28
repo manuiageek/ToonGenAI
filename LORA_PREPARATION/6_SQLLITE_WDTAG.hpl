@@ -321,7 +321,6 @@
     <limitRows>N</limitRows>
     <limitRowsNumber>0</limitRowsNumber>
     <loglevel>Basic</loglevel>
-    <logmessage/>
     <attributes/>
     <GUI>
       <xloc>720</xloc>
