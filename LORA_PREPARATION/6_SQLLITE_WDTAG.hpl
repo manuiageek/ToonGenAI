@@ -53,6 +53,11 @@
     </hop>
     <hop>
       <from>Reservoir sampling</from>
+      <to>api_body</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>api_body</from>
       <to>REST client</to>
       <enabled>Y</enabled>
     </hop>
@@ -68,8 +73,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <applicationType>TEXT PLAIN</applicationType>
-    <bodyField/>
+    <applicationType>JSON</applicationType>
+    <bodyField>api_body</bodyField>
     <connectionTimeout>10000</connectionTimeout>
     <connection_name/>
     <dynamicMethod>N</dynamicMethod>
@@ -83,11 +88,7 @@
     <method>POST</method>
     <methodFieldName/>
     <parameters>
-      <parameter>
-        <field>image_path</field>
-        <name>image_path</name>
-      </parameter>
-    </parameters>
+</parameters>
     <preemptive>N</preemptive>
     <proxyHost/>
     <proxyPort/>
@@ -100,12 +101,12 @@
     </result>
     <trustStoreFile/>
     <trustStorePassword>Encrypted </trustStorePassword>
-    <url>http://localhost:8000/getwdtags</url>
+    <url>${api_detectwdtags}</url>
     <urlField/>
     <urlInField>N</urlInField>
     <attributes/>
     <GUI>
-      <xloc>448</xloc>
+      <xloc>576</xloc>
       <yloc>160</yloc>
     </GUI>
   </transform>
@@ -149,6 +150,43 @@
     <attributes/>
     <GUI>
       <xloc>112</xloc>
+      <yloc>160</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>api_body</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>
+      <jsScript>
+        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>//Script here
+
+var api_body = '{"image_path":"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\image\image1.jpg"}';</jsScript_script>
+      </jsScript>
+    </jsScripts>
+    <fields>
+      <field>
+        <name>api_body</name>
+        <rename>api_body</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>
+    </fields>
+    <attributes/>
+    <GUI>
+      <xloc>432</xloc>
       <yloc>160</yloc>
     </GUI>
   </transform>

@@ -55,5 +55,9 @@
     "name" : "conda_python",
     "value" : "python",
     "description" : ""
+  }, {
+    "name" : "api_detectwdtags",
+    "value" : "http://localhost:8000/detectwdtags",
+    "description" : ""
   } ]
 }

@@ -231,7 +231,7 @@ class TagsRequest(BaseModel):
 class TagsResponse(BaseModel):
     tags: List[str]
 
-@app.post("/getwdtags", response_model=TagsResponse)
+@app.post("/detectwdtags", response_model=TagsResponse)
 def get_tags(req: TagsRequest) -> TagsResponse:
     # Lecture depuis le body JSON
     return TagsResponse(tags=tagger.process(req.image_path))
