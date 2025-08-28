@@ -4,26 +4,22 @@ import time
 import logging
 import numpy as np
 import onnxruntime as ort
-from pydantic import BaseModel, Field
 from PIL import Image, UnidentifiedImageError
 import csv
-from fastapi import FastAPI, Query
-from typing import List, Optional
-import uvicorn
+from typing import List
+import sqlite3
 
 # ==================== CONFIG ====================
-RUN_MODE = "api"  # "selftest" ou "api"
-
-# Chemins
+# Chemins modèle / tags
 MODEL_ONNX_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\models\wd-vit-tagger-v3.onnx"
 TAGS_CSV_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\models\wd-vit-tagger-v3.csv"
-TEST_IMAGE_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\image\image1.jpg"
 
 # Inférence
 GENERAL_THRESHOLD = 0.35
 CHARACTER_THRESHOLD = 0.75
 INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
+TOPK_OUTPUT = 20
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
@@ -34,9 +30,12 @@ NORMALIZATION = "none"
 DEFAULT_PROVIDERS = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 FORCE_CPU = False
 
-# Serveur FastAPI
-FASTAPI_HOST = "localhost"
-FASTAPI_PORT = 8000
+# SQLite
+SQLITE_DB_PATH = r"T:\_SELECT\READY\GUY DOUBLE TARGET\SQLLITE.db"
+SQLITE_QUERY = "select image_path from images limit 10"
+SQLITE_TABLE = "images"
+SQLITE_TAGS_COLUMN = "detect_wdtag"
+BATCH_COMMIT_SIZE = 1000  # commit par lots
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -76,34 +75,21 @@ _setup_cuda_paths()
 
 # ==================== TAGGER ====================
 class WD14Tagger:
-    # Constantes de classe
     MODEL_ONNX_PATH = MODEL_ONNX_PATH
     TAGS_CSV_PATH = TAGS_CSV_PATH
 
     def __init__(self):
-        # Chemins
         self.model_path = self.MODEL_ONNX_PATH
         self.tags_csv_path = self.TAGS_CSV_PATH
-
-        # Providers
         req_providers = ["CPUExecutionProvider"] if FORCE_CPU else list(DEFAULT_PROVIDERS)
-
-        # Log chemins
         logger.info("Modèle ONNX: %s", os.path.abspath(self.model_path))
         logger.info("CSV Tags: %s", os.path.abspath(self.tags_csv_path))
-
-        # Tags
         self.tags = self._load_tags(self.tags_csv_path)
-
-        # Session ORT
         self.session = self._create_session_with_fallback(req_providers)
         logger.info("Session ORT prête avec providers: %s", self.session.get_providers())
-
-        # Mise en forme d'entrée
         self.input_layout = self._infer_input_layout()
         logger.info("Layout entrée modèle: %s", self.input_layout)
 
-    # -------------------- chargement tags --------------------
     def _load_tags(self, csv_path: str) -> List[str]:
         tags: List[str] = []
         with open(csv_path, "r", encoding="utf-8", newline="") as f:
@@ -124,7 +110,6 @@ class WD14Tagger:
             raise ValueError("Aucun tag chargé depuis le CSV")
         return tags
 
-    # -------------------- session ORT --------------------
     def _create_session_with_fallback(self, providers: List[str]):
         available = set(ort.get_available_providers())
         filtered = [p for p in providers if p in available] or ["CPUExecutionProvider"]
@@ -142,7 +127,6 @@ class WD14Tagger:
                     raise RuntimeError(f"Echec création session ORT (CPU fallback). Cause initiale: {e}") from e2
             raise
 
-    # -------------------- layout entrée --------------------
     def _infer_input_layout(self) -> str:
         input_info = self.session.get_inputs()[0]
         shape = input_info.shape
@@ -155,7 +139,6 @@ class WD14Tagger:
                 return "NCHW"
         return "NHWC"
 
-    # -------------------- prétraitement --------------------
     def _preprocess(self, image_path: str) -> np.ndarray:
         if not os.path.isfile(image_path):
             raise FileNotFoundError(f"Image introuvable: {os.path.abspath(image_path)}")
@@ -186,7 +169,6 @@ class WD14Tagger:
 
         return arr.astype(np.float32)
 
-    # -------------------- post-traitement --------------------
     def _apply_thresholds(self, tag: str, score: float) -> bool:
         if tag.startswith("character:"):
             return score >= CHARACTER_THRESHOLD
@@ -202,7 +184,6 @@ class WD14Tagger:
             t = t.replace("_", " ")
         return t
 
-    # -------------------- inférence --------------------
     def process(self, image_path: str) -> List[str]:
         input_tensor = self._preprocess(image_path)
         input_name = self.session.get_inputs()[0].name
@@ -210,58 +191,91 @@ class WD14Tagger:
         probs = outputs[0]
         if hasattr(probs, "ndim") and probs.ndim > 1 and probs.shape[0] == 1:
             probs = probs[0]
-
         scored = []
         for tag, score in zip(self.tags, probs):
             s = float(score)
             if self._apply_thresholds(tag, s):
                 scored.append((self._clean_tag(tag), s))
-
         scored.sort(key=lambda x: x[1], reverse=True)
         return [t for t, _ in scored]
 
-# ==================== API ====================
-app = FastAPI()
-tagger = WD14Tagger()
+# ==================== SQLITE ====================
+def ensure_column_exists(conn: sqlite3.Connection, table: str, column: str, col_def: str = "TEXT") -> None:
+    cur = conn.cursor()
+    cur.execute(f"PRAGMA table_info({table})")
+    cols = [r[1] for r in cur.fetchall()]
+    if column not in cols:
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_def}")
+        conn.commit()
 
-class TagsRequest(BaseModel):
-    # Corps JSON d'entrée
-    image_path: str = Field(..., description="Chemin absolu de l'image")
+def fetch_image_paths(conn: sqlite3.Connection, query: str) -> List[str]:
+    paths: List[str] = []
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+    for r in rows:
+        if not r:
+            continue
+        paths.append(str(r[0]))
+    return paths
 
-class TagsResponse(BaseModel):
-    tags: List[str]
+def update_detect_wdtag(conn: sqlite3.Connection, image_path: str, tags_json: str) -> int:
+    cur = conn.cursor()
+    cur.execute(f"UPDATE {SQLITE_TABLE} SET {SQLITE_TAGS_COLUMN} = ? WHERE image_path = ?", (tags_json, image_path))
+    return cur.rowcount
 
-@app.post("/detectwdtags", response_model=TagsResponse)
-def get_tags(req: TagsRequest) -> TagsResponse:
-    # Lecture depuis le body JSON
-    return TagsResponse(tags=tagger.process(req.image_path))
+# ==================== MAIN LOOP ====================
+def run_sqlite_job() -> None:
+    logger.info("Début traitement SQLite")
+    if not os.path.isfile(SQLITE_DB_PATH):
+        raise FileNotFoundError(f"Base SQLite introuvable: {SQLITE_DB_PATH}")
 
-# ==================== SELF TEST ====================
-def self_test() -> None:
-    logger.info("Début self-test WD14")
-    logger.info("ORT %s, providers disponibles: %s", ort.__version__, ort.get_available_providers())
-    logger.info("Image de test: %s", TEST_IMAGE_PATH)
+    conn = sqlite3.connect(SQLITE_DB_PATH)
     try:
-        t0 = time.perf_counter()
-        local = WD14Tagger()
-        t1 = time.perf_counter()
-        logger.info("Session initialisée en %.2fs", t1 - t0)
-        tags = local.process(TEST_IMAGE_PATH)
-        t2 = time.perf_counter()
-        logger.info("Inférence terminée en %.2fs, %d tags retenus", t2 - t1, len(tags))
-        topk = 20
-        if topk and topk > 0:
-            tags = tags[:topk]
-        payload = {"tags": tags}
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-        logger.info("Self-test OK")
-    except Exception:
-        logger.exception("Self-test en échec")
+        ensure_column_exists(conn, SQLITE_TABLE, SQLITE_TAGS_COLUMN, "TEXT")
+        paths = fetch_image_paths(conn, SQLITE_QUERY)
+        logger.info("Chemins récupérés: %d", len(paths))
+
+        tagger = WD14Tagger()
+
+        processed = 0
+        updated = 0
+        errors = 0
+        processed_since_commit = 0  # compteur lot
+
+        for raw_p in paths:
+            p = os.path.normpath(str(raw_p).strip())
+            try:
+                t1 = time.perf_counter()
+                tags = tagger.process(p)
+                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
+                    tags = tags[:TOPK_OUTPUT]
+                dt = time.perf_counter() - t1
+                tags_json = json.dumps(tags, ensure_ascii=False)
+
+                rc = update_detect_wdtag(conn, raw_p, tags_json)
+                updated += rc
+                processed += 1
+                processed_since_commit += 1
+
+                payload = {"image_path": raw_p, "tags": tags, "infer_sec": round(dt, 3)}
+                print(json.dumps(payload, ensure_ascii=False))
+
+                # Commit intermédiaire par lots
+                if processed_since_commit >= BATCH_COMMIT_SIZE:
+                    conn.commit()
+                    logger.info("Commit intermédiaire après %d lignes OK (MAJ cumulées=%d)", processed_since_commit, updated)
+                    processed_since_commit = 0
+            except Exception:
+                errors += 1
+                logger.exception("Echec traitement: %s", raw_p)
+
+        # Commit final
+        conn.commit()
+        logger.info("Terminé. OK=%d, MAJ=%d, erreurs=%d", processed, updated, errors)
+    finally:
+        conn.close()
 
 # ==================== MAIN ====================
 if __name__ == "__main__":
-    if RUN_MODE == "api":
-        uvicorn.run(app, host=FASTAPI_HOST, port=FASTAPI_PORT)
-    else:
-        self_test()
-
+    run_sqlite_job()
