@@ -4,15 +4,15 @@ import time
 import logging
 import numpy as np
 import onnxruntime as ort
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from PIL import Image, UnidentifiedImageError
 import csv
-from fastapi import FastAPI
-from typing import List
+from fastapi import FastAPI, Query
+from typing import List, Optional
 import uvicorn
 
 # ==================== CONFIG ====================
-RUN_MODE = "selftest"  # "selftest" ou "api"
+RUN_MODE = "api"  # "selftest" ou "api"
 
 # Chemins
 MODEL_ONNX_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\models\wd-vit-tagger-v3.onnx"
@@ -224,12 +224,17 @@ class WD14Tagger:
 app = FastAPI()
 tagger = WD14Tagger()
 
+class TagsRequest(BaseModel):
+    # Corps JSON d'entrée
+    image_path: str = Field(..., description="Chemin absolu de l'image")
+
 class TagsResponse(BaseModel):
     tags: List[str]
 
-@app.get("/getwdtags", response_model=TagsResponse)
-def get_tags(image_path: str) -> TagsResponse:
-    return TagsResponse(tags=tagger.process(image_path))
+@app.post("/getwdtags", response_model=TagsResponse)
+def get_tags(req: TagsRequest) -> TagsResponse:
+    # Lecture depuis le body JSON
+    return TagsResponse(tags=tagger.process(req.image_path))
 
 # ==================== SELF TEST ====================
 def self_test() -> None:
@@ -259,3 +264,4 @@ if __name__ == "__main__":
         uvicorn.run(app, host=FASTAPI_HOST, port=FASTAPI_PORT)
     else:
         self_test()
+

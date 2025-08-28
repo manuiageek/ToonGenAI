@@ -60,6 +60,7 @@ conda install -c conda-forge cudnn=9.3.1
 pip install onnxruntime-gpu
 pip install --upgrade "onnxruntime-gpu[cuda,cudnn]"
 
+Exemple : conda run -n onnx_env --no-capture-output python -u .\anime_autotagger_gpu.py
 
 ### NODEJS :
 
