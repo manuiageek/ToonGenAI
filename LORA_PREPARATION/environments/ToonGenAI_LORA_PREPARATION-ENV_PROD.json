@@ -12,6 +12,10 @@
     "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_person_or_delete.py",
     "description" : ""
   }, {
+    "name" : "detect_wdtag_gpu_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_wdtag_gpu.py",
+    "description" : ""
+  }, {
     "name" : "python_option_u",
     "value" : "-u",
     "description" : ""
@@ -48,16 +52,16 @@
     "value" : "ptorch_env",
     "description" : ""
   }, {
+    "name" : "conda_onnx_env",
+    "value" : "onnx_env",
+    "description" : ""
+  }, {
     "name" : "conda_no_capture_output",
     "value" : "--no-capture-output",
     "description" : ""
   }, {
     "name" : "conda_python",
     "value" : "python",
-    "description" : ""
-  }, {
-    "name" : "api_detectwdtags",
-    "value" : "http://localhost:8000/detectwdtags",
     "description" : ""
   } ]
 }

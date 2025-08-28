@@ -8,6 +8,7 @@ from PIL import Image, UnidentifiedImageError
 import csv
 from typing import List
 import sqlite3
+import argparse  # CLI
 
 # ==================== CONFIG ====================
 # Chemins modèle / tags
@@ -31,8 +32,8 @@ DEFAULT_PROVIDERS = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 FORCE_CPU = False
 
 # SQLite
-SQLITE_DB_PATH = r"T:\_SELECT\READY\GUY DOUBLE TARGET\SQLLITE.db"
-SQLITE_QUERY = "select image_path from images limit 10"
+DB_FILENAME = "SQLLITE.db"  # nom fixe du fichier
+SQLITE_QUERY = "select image_path from images limit 20"
 SQLITE_TABLE = "images"
 SQLITE_TAGS_COLUMN = "detect_wdtag"
 BATCH_COMMIT_SIZE = 1000  # commit par lots
@@ -200,15 +201,8 @@ class WD14Tagger:
         return [t for t, _ in scored]
 
 # ==================== SQLITE ====================
-def ensure_column_exists(conn: sqlite3.Connection, table: str, column: str, col_def: str = "TEXT") -> None:
-    cur = conn.cursor()
-    cur.execute(f"PRAGMA table_info({table})")
-    cols = [r[1] for r in cur.fetchall()]
-    if column not in cols:
-        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_def}")
-        conn.commit()
-
 def fetch_image_paths(conn: sqlite3.Connection, query: str) -> List[str]:
+    # Récupération des chemins
     paths: List[str] = []
     cur = conn.cursor()
     cur.execute(query)
@@ -220,19 +214,20 @@ def fetch_image_paths(conn: sqlite3.Connection, query: str) -> List[str]:
     return paths
 
 def update_detect_wdtag(conn: sqlite3.Connection, image_path: str, tags_json: str) -> int:
+    # Mise à jour des tags
     cur = conn.cursor()
     cur.execute(f"UPDATE {SQLITE_TABLE} SET {SQLITE_TAGS_COLUMN} = ? WHERE image_path = ?", (tags_json, image_path))
     return cur.rowcount
 
 # ==================== MAIN LOOP ====================
-def run_sqlite_job() -> None:
+def run_sqlite_job(db_path: str) -> None:
+    # Boucle principale SQLite
     logger.info("Début traitement SQLite")
-    if not os.path.isfile(SQLITE_DB_PATH):
-        raise FileNotFoundError(f"Base SQLite introuvable: {SQLITE_DB_PATH}")
+    if not os.path.isfile(db_path):
+        raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
 
-    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn = sqlite3.connect(db_path)
     try:
-        ensure_column_exists(conn, SQLITE_TABLE, SQLITE_TAGS_COLUMN, "TEXT")
         paths = fetch_image_paths(conn, SQLITE_QUERY)
         logger.info("Chemins récupérés: %d", len(paths))
 
@@ -241,7 +236,7 @@ def run_sqlite_job() -> None:
         processed = 0
         updated = 0
         errors = 0
-        processed_since_commit = 0  # compteur lot
+        processed_since_commit = 0
 
         for raw_p in paths:
             p = os.path.normpath(str(raw_p).strip())
@@ -261,7 +256,6 @@ def run_sqlite_job() -> None:
                 payload = {"image_path": raw_p, "tags": tags, "infer_sec": round(dt, 3)}
                 print(json.dumps(payload, ensure_ascii=False))
 
-                # Commit intermédiaire par lots
                 if processed_since_commit >= BATCH_COMMIT_SIZE:
                     conn.commit()
                     logger.info("Commit intermédiaire après %d lignes OK (MAJ cumulées=%d)", processed_since_commit, updated)
@@ -270,12 +264,32 @@ def run_sqlite_job() -> None:
                 errors += 1
                 logger.exception("Echec traitement: %s", raw_p)
 
-        # Commit final
         conn.commit()
         logger.info("Terminé. OK=%d, MAJ=%d, erreurs=%d", processed, updated, errors)
     finally:
         conn.close()
 
+# ==================== CLI ====================
+def build_db_path_from_dir(directory: str) -> str:
+    # Concaténation dossier + nom fixe
+    return os.path.join(directory, DB_FILENAME)
+
 # ==================== MAIN ====================
 if __name__ == "__main__":
-    run_sqlite_job()
+    parser = argparse.ArgumentParser(description="WD14 Tagger - Traitement via SQLite")
+    parser.add_argument(
+        "--directory",
+        type=str,
+        default=r"T:\_SELECT\READY\GUY DOUBLE TARGET",
+        help="Repertoire contenant SQLLITE.db"
+    )
+    args = parser.parse_args()
+
+    base_dir = os.path.normpath(args.directory)
+    if not os.path.isdir(base_dir):
+        raise FileNotFoundError(f"Répertoire introuvable: {base_dir}")
+
+    sqlite_db_path = build_db_path_from_dir(base_dir)
+    logger.info("Base SQLite résolue: %s", sqlite_db_path)
+
+    run_sqlite_job(sqlite_db_path)
