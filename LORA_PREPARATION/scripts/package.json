@@ -1,0 +1,15 @@
+{
+  "name": "scrapweb_characters",
+  "version": "1.0.0",
+  "main": "5_scrapweb_characters.js",
+  "scripts": {
+    "postinstall": "puppeteer browsers install chrome",
+    "start": "node utils_scrapweb_characters.js"
+  },
+  "keywords": [],
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.4.0"
+  }
+}
