@@ -8,7 +8,7 @@ const BASE_URL = "https://myanimelist.net/anime/40128/Arte";
 const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\ARTE`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_CHARACTERS");
 
-// utils
+// utils fichiers/réseau
 async function downloadImage(url, filePath) {
   const res = await fetch(url);
   if (!res.ok) {
@@ -22,7 +22,35 @@ async function downloadImage(url, filePath) {
   });
 }
 
-// main
+// utils noms de fichiers
+function sanitizeFilename(input, maxLength = 128) {
+  let s = input ?? "unknown";
+  try {
+    s = decodeURIComponent(s);
+      } catch {
+    // ignore
+      }
+
+  s = s
+    .replace(/_0\d{2}_/g, "_")           // artefacts _039_
+    .replace(/&#0*39;|&#x27;|&apos;/gi, "_")
+    .replace(/&quot;|&amp;|&lt;|&gt;|&nbsp;/gi, "_")
+    .replace(/&[a-z]+;|&#x?[0-9a-f]+;/gi, "_"); // autres entités
+
+  s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); // accents
+
+  s = s.replace(/[^a-zA-Z0-9-]+/g, "_");  // keep lettres/chiffres/-
+  s = s.replace(/_+/g, "_");              // compresser _
+  s = s.replace(/^_+|_+$/g, "");          // trim _
+  if (!s) s = "unknown";
+
+  if (s.length > maxLength) {
+    s = s.slice(0, maxLength);
+  }
+  return s;
+}
+
+// main scraping
 (async () => {
   let url = BASE_URL.trim();
   if (!url) {
@@ -51,10 +79,9 @@ async function downloadImage(url, filePath) {
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
   );
-
-  try {
-    await page.goto(url, { waitUntil: "networkidle2" });
-    await page.waitForSelector("h3.h3_character_name", { timeout: 10000 });
+            try {
+      await page.goto(url, { waitUntil: "networkidle2" });
+      await page.waitForSelector("h3.h3_character_name", { timeout: 10000 });
     console.log("La page des personnages est chargée, début de l'extraction des liens...");
 
     const characterLinks = await page.evaluate(() => {
@@ -72,8 +99,8 @@ async function downloadImage(url, filePath) {
       const link = characterLinks[i];
       console.log(`Traitement du personnage ${i + 1}/${totalCharacters} : ${link}`);
 
-      const urlName = link.split("/").pop();
-      const name = (urlName || "unknown").replace(/[^a-zA-Z0-9-_]/g, "");
+      const urlName = link.split("/").pop() || "unknown";
+      const name = sanitizeFilename(urlName);
 
       await page.goto(link, { waitUntil: "networkidle2" });
 
@@ -83,7 +110,7 @@ async function downloadImage(url, filePath) {
       } catch {
         console.log(`Image non disponible pour ${name}.`);
         imageAvailable = false;
-      }
+    }
 
       let imageUrl = "";
       if (imageAvailable) {
@@ -101,7 +128,10 @@ async function downloadImage(url, filePath) {
 
         if (imageUrl) {
           const noQuery = imageUrl.split("?")[0];
-          const ext = path.extname(noQuery) || ".jpg";
+          let ext = (path.extname(noQuery) || ".jpg").toLowerCase();
+          const safeExts = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+          if (!safeExts.has(ext)) ext = ".jpg";
+
           const fileName = `${name}${ext}`;
           const filePath = path.join(OUTPUT_DIR, fileName);
 
