@@ -334,6 +334,26 @@
     </hop>
   </hops>
   <notepads>
+    <notepad>
+      <backgroundcolorblue>251</backgroundcolorblue>
+      <backgroundcolorgreen>232</backgroundcolorgreen>
+      <backgroundcolorred>201</backgroundcolorred>
+      <bordercolorblue>90</bordercolorblue>
+      <bordercolorgreen>58</bordercolorgreen>
+      <bordercolorred>14</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>90</fontcolorblue>
+      <fontcolorgreen>58</fontcolorgreen>
+      <fontcolorred>14</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>9</fontsize>
+      <height>26</height>
+      <xloc>544</xloc>
+      <yloc>560</yloc>
+      <note>prepare _characters folder</note>
+      <width>147</width>
+    </notepad>
   </notepads>
   <attributes/>
 </workflow>
