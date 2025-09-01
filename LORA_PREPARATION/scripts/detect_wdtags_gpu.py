@@ -33,10 +33,14 @@ FORCE_CPU = False
 
 # SQLite
 DB_FILENAME = "SQLLITE.db"  # nom fixe du fichier
-SQLITE_QUERY = "select image_path from images"
+SQLITE_QUERY = "select image_path from images limit 10"  # limit 10
 SQLITE_TABLE = "images"
 SQLITE_TAGS_COLUMN = "detect_wdtags"
 BATCH_COMMIT_SIZE = 1000  # commit par lots
+
+# Characters dir + extensions images
+CHARACTERS_DIR_NAME = "_characters"  # dossier spécial
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}  # filtres images
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -219,6 +223,30 @@ def update_detect_wdtag(conn: sqlite3.Connection, image_path: str, tags_json: st
     cur.execute(f"UPDATE {SQLITE_TABLE} SET {SQLITE_TAGS_COLUMN} = ? WHERE image_path = ?", (tags_json, image_path))
     return cur.rowcount
 
+# ==== Lookalike helpers (nouvelle fonctionnalité) ====
+def ensure_lookalike_table(conn: sqlite3.Connection) -> None:
+    # Création table si absente
+    cur = conn.cursor()
+
+def upsert_lookalike(conn: sqlite3.Connection, character_name: str, tags_json: str) -> int:
+    # UPSERT par nom de fichier
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO "lookalike" ("character","wdtags") VALUES (?, ?) '
+        'ON CONFLICT("character") DO UPDATE SET "wdtags"=excluded."wdtags"',
+        (character_name, tags_json),
+    )
+    return cur.rowcount
+
+def iter_image_files(dir_path: str):
+    # Itération images
+    for entry in os.scandir(dir_path):
+        if not entry.is_file():
+            continue
+        ext = os.path.splitext(entry.name)[1].lower()
+        if ext in IMAGE_EXTS:
+            yield entry.path
+
 # ==================== MAIN LOOP ====================
 def run_sqlite_job(db_path: str) -> None:
     # Boucle principale SQLite
@@ -269,6 +297,60 @@ def run_sqlite_job(db_path: str) -> None:
     finally:
         conn.close()
 
+# ==== Job _characters (nouvelle fonctionnalité) ====
+def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
+    # Boucle _characters -> table lookalike
+    logger.info("Début traitement lookalike pour: %s", characters_dir)
+    if not os.path.isdir(characters_dir):
+        logger.info("Dossier _characters absent, skip")
+        return
+
+    if not os.path.isfile(db_path):
+        raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
+
+    conn = sqlite3.connect(db_path)
+    try:
+        ensure_lookalike_table(conn)
+        tagger = WD14Tagger()
+
+        processed = 0
+        upserts = 0
+        errors = 0
+        processed_since_commit = 0
+
+        for fp in iter_image_files(characters_dir):
+            try:
+                t1 = time.perf_counter()
+                tags = tagger.process(fp)
+                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
+                    tags = tags[:TOPK_OUTPUT]
+                dt = time.perf_counter() - t1
+                tags_json = json.dumps(tags, ensure_ascii=False)
+
+                # Nom sans extension
+                character_name = os.path.splitext(os.path.basename(fp))[0]
+
+                rc = upsert_lookalike(conn, character_name, tags_json)
+                upserts += rc
+                processed += 1
+                processed_since_commit += 1
+
+                payload = {"character": character_name, "tags": tags, "infer_sec": round(dt, 3)}
+                print(json.dumps(payload, ensure_ascii=False))
+
+                if processed_since_commit >= BATCH_COMMIT_SIZE:
+                    conn.commit()
+                    logger.info("Commit intermédiaire lookalike après %d fichiers (UPSERT cumulés=%d)", processed_since_commit, upserts)
+                    processed_since_commit = 0
+            except Exception:
+                errors += 1
+                logger.exception("Echec traitement lookalike: %s", fp)
+
+        conn.commit()
+        logger.info("Lookalike terminé. OK=%d, UPSERT=%d, erreurs=%d", processed, upserts, errors)
+    finally:
+        conn.close()
+
 # ==================== CLI ====================
 def build_db_path_from_dir(directory: str) -> str:
     # Concaténation dossier + nom fixe
@@ -292,4 +374,14 @@ if __name__ == "__main__":
     sqlite_db_path = build_db_path_from_dir(base_dir)
     logger.info("Base SQLite résolue: %s", sqlite_db_path)
 
+    # Traitement principal
     run_sqlite_job(sqlite_db_path)
+
+    # Traitement _characters -> table lookalike
+    characters_dir = os.path.join(base_dir, CHARACTERS_DIR_NAME)
+    if os.path.isdir(characters_dir):
+        logger.info("Dossier _characters détecté: %s", characters_dir)
+        run_characters_dir_job(sqlite_db_path, characters_dir)
+    else:
+        logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
+
