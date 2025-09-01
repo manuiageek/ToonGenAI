@@ -6,7 +6,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, UnidentifiedImageError
 import csv
-from typing import List
+from typing import List, Optional
 import sqlite3
 import argparse  # CLI
 
@@ -33,7 +33,7 @@ FORCE_CPU = False
 
 # SQLite
 DB_FILENAME = "SQLLITE.db"  # nom fixe du fichier
-SQLITE_QUERY = "select image_path from images limit 10"  # limit 10
+SQLITE_QUERY = "select image_path from images"  # limit 10
 SQLITE_TABLE = "images"
 SQLITE_TAGS_COLUMN = "detect_wdtags"
 BATCH_COMMIT_SIZE = 1000  # commit par lots
@@ -41,6 +41,13 @@ BATCH_COMMIT_SIZE = 1000  # commit par lots
 # Characters dir + extensions images
 CHARACTERS_DIR_NAME = "_characters"  # dossier spécial
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}  # filtres images
+
+# Post-traitement IA lookalike
+LOOKALIKE_AI_ENABLED = True  # activation
+OPENAI_MODEL = "gpt-5-nano"  # modèle cible
+OPENAI_TIMEOUT = 30  # secondes
+MAX_AI_RETRIES = 3
+AI_RETRY_BACKOFF_SEC = 2
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -223,13 +230,26 @@ def update_detect_wdtag(conn: sqlite3.Connection, image_path: str, tags_json: st
     cur.execute(f"UPDATE {SQLITE_TABLE} SET {SQLITE_TAGS_COLUMN} = ? WHERE image_path = ?", (tags_json, image_path))
     return cur.rowcount
 
-# ==== Lookalike helpers (nouvelle fonctionnalité) ====
+# ==== Helpers fichiers images ====
+def iter_image_files(dir_path: str):
+    # Itération images du dossier
+    for entry in os.scandir(dir_path):
+        if not entry.is_file():
+            continue
+        ext = os.path.splitext(entry.name)[1].lower()
+        if ext in IMAGE_EXTS:
+            yield entry.path
+
+# ==== Lookalike helpers ====
 def ensure_lookalike_table(conn: sqlite3.Connection) -> None:
-    # Création table si absente
+    # Création table + index
     cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS "lookalike" ("character" TEXT PRIMARY KEY, "wdtags" TEXT NOT NULL)')
+    cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS "ux_lookalike_character" ON "lookalike"("character")')
+    conn.commit()
 
 def upsert_lookalike(conn: sqlite3.Connection, character_name: str, tags_json: str) -> int:
-    # UPSERT par nom de fichier
+    # UPSERT wdtags uniquement
     cur = conn.cursor()
     cur.execute(
         'INSERT INTO "lookalike" ("character","wdtags") VALUES (?, ?) '
@@ -238,14 +258,144 @@ def upsert_lookalike(conn: sqlite3.Connection, character_name: str, tags_json: s
     )
     return cur.rowcount
 
-def iter_image_files(dir_path: str):
-    # Itération images
-    for entry in os.scandir(dir_path):
-        if not entry.is_file():
-            continue
-        ext = os.path.splitext(entry.name)[1].lower()
-        if ext in IMAGE_EXTS:
-            yield entry.path
+# ==== OpenAI post-traitement ====
+# ==== OpenAI post-traitement ====
+def _sanitize_json_block(s: str) -> str:
+    # Nettoyage éventuels fences
+    s = s.strip()
+    if s.startswith("```"):
+        lines = s.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        s = "\n".join(lines).strip()
+    return s
+
+def ai_refine_tags(tags: List[str]) -> List[str]:
+    # Filtrage IA des tags
+    if not LOOKALIKE_AI_ENABLED:
+        return tags
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("OPENAI_API_KEY manquante, post-traitement IA ignoré")
+        return tags
+
+    try:
+        from openai import OpenAI
+    except Exception:
+        logger.warning("SDK OpenAI non disponible, post-traitement IA ignoré")
+        return tags
+
+    client = OpenAI(api_key=api_key)  # instanciation correcte
+
+    system_msg = (
+        "Retire les informations sur l'habillement de la liste des tags. "
+        "Retire les tags comme 'solo', '1girl' ou '1boy'. "
+        "Retire les tags qui font référence à un style en particulier. "
+        "Retire les tags sont ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' 'looking at viewer' et autres du même genre. "
+        "Réponds uniquement par une liste JSON de chaînes."
+    )
+    user_msg = json.dumps(tags, ensure_ascii=False)
+
+    current_model = OPENAI_MODEL
+    for attempt in range(1, MAX_AI_RETRIES + 1):
+        try:
+            resp = client.chat.completions.create(
+                model=current_model,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg},
+                ],
+                timeout=OPENAI_TIMEOUT,
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            content = _sanitize_json_block(content)
+            try:
+                data = json.loads(content)
+                if isinstance(data, list) and all(isinstance(x, str) for x in data):
+                    return data
+                if isinstance(data, dict) and "tags" in data and isinstance(data["tags"], list):
+                    return [str(x) for x in data["tags"]]
+            except Exception:
+                pass
+            logger.warning("Réponse IA non JSON valide, conservation des tags d'origine")
+            return tags
+        except Exception as e:
+            msg = str(e)
+            logger.warning("Erreur IA tentative %d/%d: %s", attempt, MAX_AI_RETRIES, msg)
+
+            lower = msg.lower()
+            if ("model" in lower or "unsupported" in lower or "not found" in lower) and current_model != "gpt-4.1-nano":
+                logger.info("Fallback modèle vers gpt-4.1-nano")
+                current_model = "gpt-4.1-nano"
+                continue
+
+            if attempt < MAX_AI_RETRIES:
+                time.sleep(AI_RETRY_BACKOFF_SEC)
+            else:
+                logger.warning("Post-traitement IA abandonné, conservation des tags d'origine")
+
+    return tags
+
+# ==== Job _characters ====
+def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
+    # Boucle _characters -> table lookalike + IA
+    logger.info("Début traitement lookalike pour: %s", characters_dir)
+    if not os.path.isdir(characters_dir):
+        logger.info("Dossier _characters absent, skip")
+        return
+
+    if not os.path.isfile(db_path):
+        raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
+
+    conn = sqlite3.connect(db_path)
+    try:
+        ensure_lookalike_table(conn)
+        tagger = WD14Tagger()
+
+        processed = 0
+        upserts = 0
+        errors = 0
+        processed_since_commit = 0
+
+        for fp in iter_image_files(characters_dir):
+            try:
+                t1 = time.perf_counter()
+                tags = tagger.process(fp)
+                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
+                    tags = tags[:TOPK_OUTPUT]
+                dt = time.perf_counter() - t1
+
+                # Résultat final = tags filtrés par IA
+                final_tags = ai_refine_tags(tags) if LOOKALIKE_AI_ENABLED else tags
+                tags_json = json.dumps(final_tags, ensure_ascii=False)
+                character_name = os.path.splitext(os.path.basename(fp))[0]
+
+                rc = upsert_lookalike(conn, character_name, tags_json)
+                upserts += rc
+                processed += 1
+                processed_since_commit += 1
+
+                payload = {
+                    "character": character_name,
+                    "tags": final_tags,
+                    "infer_sec": round(dt, 3),
+                }
+                print(json.dumps(payload, ensure_ascii=False))
+
+                if processed_since_commit >= BATCH_COMMIT_SIZE:
+                    conn.commit()
+                    logger.info("Commit intermédiaire lookalike après %d fichiers (UPSERT cumulés=%d)", processed_since_commit, upserts)
+                    processed_since_commit = 0
+            except Exception:
+                errors += 1
+                logger.exception("Echec traitement lookalike: %s", fp)
+
+        conn.commit()
+        logger.info("Lookalike terminé. OK=%d, UPSERT=%d, erreurs=%d", processed, upserts, errors)
+    finally:
+        conn.close()
 
 # ==================== MAIN LOOP ====================
 def run_sqlite_job(db_path: str) -> None:
@@ -256,7 +406,7 @@ def run_sqlite_job(db_path: str) -> None:
 
     conn = sqlite3.connect(db_path)
     try:
-        paths = fetch_image_paths(conn, SQLITE_QUERY)
+        paths = fetch_image_paths(conn, SQLITED_QUERY if (SQLITED_QUERY := SQLITE_QUERY) else SQLITE_QUERY)
         logger.info("Chemins récupérés: %d", len(paths))
 
         tagger = WD14Tagger()
@@ -297,60 +447,6 @@ def run_sqlite_job(db_path: str) -> None:
     finally:
         conn.close()
 
-# ==== Job _characters (nouvelle fonctionnalité) ====
-def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
-    # Boucle _characters -> table lookalike
-    logger.info("Début traitement lookalike pour: %s", characters_dir)
-    if not os.path.isdir(characters_dir):
-        logger.info("Dossier _characters absent, skip")
-        return
-
-    if not os.path.isfile(db_path):
-        raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
-
-    conn = sqlite3.connect(db_path)
-    try:
-        ensure_lookalike_table(conn)
-        tagger = WD14Tagger()
-
-        processed = 0
-        upserts = 0
-        errors = 0
-        processed_since_commit = 0
-
-        for fp in iter_image_files(characters_dir):
-            try:
-                t1 = time.perf_counter()
-                tags = tagger.process(fp)
-                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
-                    tags = tags[:TOPK_OUTPUT]
-                dt = time.perf_counter() - t1
-                tags_json = json.dumps(tags, ensure_ascii=False)
-
-                # Nom sans extension
-                character_name = os.path.splitext(os.path.basename(fp))[0]
-
-                rc = upsert_lookalike(conn, character_name, tags_json)
-                upserts += rc
-                processed += 1
-                processed_since_commit += 1
-
-                payload = {"character": character_name, "tags": tags, "infer_sec": round(dt, 3)}
-                print(json.dumps(payload, ensure_ascii=False))
-
-                if processed_since_commit >= BATCH_COMMIT_SIZE:
-                    conn.commit()
-                    logger.info("Commit intermédiaire lookalike après %d fichiers (UPSERT cumulés=%d)", processed_since_commit, upserts)
-                    processed_since_commit = 0
-            except Exception:
-                errors += 1
-                logger.exception("Echec traitement lookalike: %s", fp)
-
-        conn.commit()
-        logger.info("Lookalike terminé. OK=%d, UPSERT=%d, erreurs=%d", processed, upserts, errors)
-    finally:
-        conn.close()
-
 # ==================== CLI ====================
 def build_db_path_from_dir(directory: str) -> str:
     # Concaténation dossier + nom fixe
@@ -377,11 +473,10 @@ if __name__ == "__main__":
     # Traitement principal
     run_sqlite_job(sqlite_db_path)
 
-    # Traitement _characters -> table lookalike
+    # Traitement _characters -> table lookalike + IA
     characters_dir = os.path.join(base_dir, CHARACTERS_DIR_NAME)
     if os.path.isdir(characters_dir):
         logger.info("Dossier _characters détecté: %s", characters_dir)
         run_characters_dir_job(sqlite_db_path, characters_dir)
     else:
         logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
-
