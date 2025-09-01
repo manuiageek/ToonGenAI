@@ -293,7 +293,8 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         "Retire les informations sur l'habillement de la liste des tags. "
         "Retire les tags comme 'solo', '1girl' ou '1boy'. "
         "Retire les tags qui font référence à un style en particulier. "
-        "Retire les tags sont ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' 'looking at viewer' 'portrait' et autres du même genre. "
+        "Retire les tags sont ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' et autres du même genre. "
+        "Retire les tags suivants 'looking at viewer' 'portrait'. "
         "Réponds uniquement par une liste JSON de chaînes."
     )
     user_msg = json.dumps(tags, ensure_ascii=False)
