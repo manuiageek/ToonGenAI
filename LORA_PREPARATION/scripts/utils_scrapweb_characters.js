@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 
 // CONFIG
 const BASE_URL = "https://myanimelist.net/anime/40128/Arte";
-const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\ARTE`;
+const OUTPUT_ROOT_DIR = String.raw`D:\SHUUMATSU NO WALKURE`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
 // utils fichiers/réseau
