@@ -213,7 +213,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>448</yloc>
+      <yloc>496</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -243,7 +243,67 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>544</yloc>
+      <yloc>592</yloc>
+      <attributes_hac/>
+    </action>
+    <action>
+      <name>7_LOOKALIKE_IMAGES.hpl</name>
+      <description/>
+      <type>PIPELINE</type>
+      <attributes/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <clear_files>N</clear_files>
+      <clear_rows>N</clear_rows>
+      <create_parent_folder>N</create_parent_folder>
+      <exec_per_row>N</exec_per_row>
+      <filename>${PROJECT_HOME}/LORA_PREPARATION/7_LOOKALIKE_IMAGES.hpl</filename>
+      <loglevel>Basic</loglevel>
+      <parameters>
+        <parameter>
+          <name>anime_folder_param</name>
+          <value>${anime_folder_param}</value>
+        </parameter>
+        <pass_all_parameters>N</pass_all_parameters>
+      </parameters>
+      <params_from_previous>N</params_from_previous>
+      <run_configuration>local</run_configuration>
+      <set_append_logfile>N</set_append_logfile>
+      <set_logfile>N</set_logfile>
+      <wait_until_finished>Y</wait_until_finished>
+      <parallel>N</parallel>
+      <xloc>416</xloc>
+      <yloc>736</yloc>
+      <attributes_hac/>
+    </action>
+    <action>
+      <name>8_CLASSIFY_IMAGES.hpl</name>
+      <description/>
+      <type>PIPELINE</type>
+      <attributes/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <clear_files>N</clear_files>
+      <clear_rows>N</clear_rows>
+      <create_parent_folder>N</create_parent_folder>
+      <exec_per_row>N</exec_per_row>
+      <filename>${PROJECT_HOME}/LORA_PREPARATION/8_CLASSIFY_IMAGES.hpl</filename>
+      <loglevel>Basic</loglevel>
+      <parameters>
+        <parameter>
+          <name>anime_folder_param</name>
+          <value>${anime_folder_param}</value>
+        </parameter>
+        <pass_all_parameters>N</pass_all_parameters>
+      </parameters>
+      <params_from_previous>N</params_from_previous>
+      <run_configuration>local</run_configuration>
+      <set_append_logfile>N</set_append_logfile>
+      <set_logfile>N</set_logfile>
+      <wait_until_finished>Y</wait_until_finished>
+      <parallel>N</parallel>
+      <xloc>416</xloc>
+      <yloc>832</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -312,28 +372,55 @@
       <unconditional>Y</unconditional>
     </hop>
     <hop>
-      <from>4_DELETE_NON_PERSON.hpl</from>
-      <to>5_IMG_TO_SQLLITE.hpl</to>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>5_IMG_TO_SQLLITE.hpl</from>
-      <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
       <from>Start</from>
       <to>6_SQLLITE_WDTAG.hpl</to>
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
+    <hop>
+      <from>Start</from>
+      <to>7_LOOKALIKE_IMAGES.hpl</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>7_LOOKALIKE_IMAGES.hpl</from>
+      <to>8_CLASSIFY_IMAGES.hpl</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>8_CLASSIFY_IMAGES.hpl</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
   </hops>
   <notepads>
+    <notepad>
+      <backgroundcolorblue>255</backgroundcolorblue>
+      <backgroundcolorgreen>255</backgroundcolorgreen>
+      <backgroundcolorred>128</backgroundcolorred>
+      <bordercolorblue>90</bordercolorblue>
+      <bordercolorgreen>58</bordercolorgreen>
+      <bordercolorred>14</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>90</fontcolorblue>
+      <fontcolorgreen>58</fontcolorgreen>
+      <fontcolorred>14</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>15</fontsize>
+      <height>37</height>
+      <xloc>544</xloc>
+      <yloc>592</yloc>
+      <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
+      <width>663</width>
+    </notepad>
     <notepad>
       <backgroundcolorblue>251</backgroundcolorblue>
       <backgroundcolorgreen>232</backgroundcolorgreen>
@@ -347,12 +434,12 @@
       <fontcolorred>14</fontcolorred>
       <fontitalic>N</fontitalic>
       <fontname>Segoe UI</fontname>
-      <fontsize>9</fontsize>
-      <height>26</height>
+      <fontsize>15</fontsize>
+      <height>37</height>
       <xloc>544</xloc>
-      <yloc>560</yloc>
-      <note>prepare _characters folder</note>
-      <width>147</width>
+      <yloc>512</yloc>
+      <note>&lt;-- la base SQLLITE.db doit exister dans le répertoire : SQLLITE_example</note>
+      <width>632</width>
     </notepad>
   </notepads>
   <attributes/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pipeline>
   <info>
-    <name>6_SQLLITE_WDTAG</name>
+    <name>7_LOOKALIKE_IMAGES</name>
     <name_sync_with_filename>Y</name_sync_with_filename>
     <description/>
     <extended_description/>
@@ -61,25 +61,13 @@
         <argumentFieldName>cmd_exe_start</argumentFieldName>
       </argumentField>
       <argumentField>
-        <argumentFieldName>conda_exe</argumentFieldName>
+        <argumentFieldName>python_exe</argumentFieldName>
       </argumentField>
       <argumentField>
-        <argumentFieldName>conda_exe_run</argumentFieldName>
+        <argumentFieldName>python_option_u</argumentFieldName>
       </argumentField>
       <argumentField>
-        <argumentFieldName>conda_exe_n</argumentFieldName>
-      </argumentField>
-      <argumentField>
-        <argumentFieldName>conda_onnx_env</argumentFieldName>
-      </argumentField>
-      <argumentField>
-        <argumentFieldName>conda_no_capture_output</argumentFieldName>
-      </argumentField>
-      <argumentField>
-        <argumentFieldName>conda_python</argumentFieldName>
-      </argumentField>
-      <argumentField>
-        <argumentFieldName>detect_wdtag_gpu_py</argumentFieldName>
+        <argumentFieldName>lookalike_images_by_wdtags_py</argumentFieldName>
       </argumentField>
       <argumentField>
         <argumentFieldName>python_option_directory</argumentFieldName>
@@ -97,8 +85,8 @@
     <resultfieldname>stdout</resultfieldname>
     <attributes/>
     <GUI>
-      <xloc>592</xloc>
-      <yloc>192</yloc>
+      <xloc>704</xloc>
+      <yloc>208</yloc>
     </GUI>
   </transform>
   <transform>
@@ -123,11 +111,27 @@
       </field>
       <field>
         <length>-1</length>
-        <name>detect_wdtag_gpu_py</name>
+        <name>lookalike_images_by_wdtags_py</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${detect_wdtag_gpu_py}</variable>
+        <variable>${lookalike_images_by_wdtags_py}</variable>
+      </field>
+      <field>
+        <length>-1</length>
+        <name>python_exe</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${python_exe}</variable>
+      </field>
+      <field>
+        <length>-1</length>
+        <name>python_option_u</name>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+        <type>String</type>
+        <variable>${python_option_u}</variable>
       </field>
       <field>
         <length>-1</length>
@@ -161,59 +165,11 @@
         <type>String</type>
         <variable>${cmd_exe_start}</variable>
       </field>
-      <field>
-        <length>-1</length>
-        <name>conda_exe</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_exe}</variable>
-      </field>
-      <field>
-        <length>-1</length>
-        <name>conda_exe_run</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_exe_run}</variable>
-      </field>
-      <field>
-        <length>-1</length>
-        <name>conda_exe_n</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_exe_n}</variable>
-      </field>
-      <field>
-        <length>-1</length>
-        <name>conda_onnx_env</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_onnx_env}</variable>
-      </field>
-      <field>
-        <length>-1</length>
-        <name>conda_python</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_python}</variable>
-      </field>
-      <field>
-        <length>-1</length>
-        <name>conda_no_capture_output</name>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-        <type>String</type>
-        <variable>${conda_no_capture_output}</variable>
-      </field>
     </fields>
     <attributes/>
     <GUI>
-      <xloc>304</xloc>
-      <yloc>192</yloc>
+      <xloc>400</xloc>
+      <yloc>208</yloc>
     </GUI>
   </transform>
   <transform>
@@ -242,10 +198,11 @@
     <limitRows>N</limitRows>
     <limitRowsNumber>0</limitRowsNumber>
     <loglevel>Basic</loglevel>
+    <logmessage/>
     <attributes/>
     <GUI>
-      <xloc>736</xloc>
-      <yloc>192</yloc>
+      <xloc>848</xloc>
+      <yloc>208</yloc>
     </GUI>
   </transform>
   <transform>
@@ -265,7 +222,13 @@
         <name>anime_folder_param</name>
       </field>
       <field>
-        <name>detect_wdtag_gpu_py</name>
+        <name>lookalike_images_by_wdtags_py</name>
+      </field>
+      <field>
+        <name>python_exe</name>
+      </field>
+      <field>
+        <name>python_option_u</name>
       </field>
       <field>
         <name>python_option_directory</name>
@@ -279,32 +242,14 @@
       <field>
         <name>cmd_exe_start</name>
       </field>
-      <field>
-        <name>conda_exe</name>
-      </field>
-      <field>
-        <name>conda_exe_run</name>
-      </field>
-      <field>
-        <name>conda_exe_n</name>
-      </field>
-      <field>
-        <name>conda_onnx_env</name>
-      </field>
-      <field>
-        <name>conda_python</name>
-      </field>
-      <field>
-        <name>conda_no_capture_output</name>
-      </field>
     </fields>
     <limitRows>N</limitRows>
     <limitRowsNumber>0</limitRowsNumber>
     <loglevel>Basic</loglevel>
     <attributes/>
     <GUI>
-      <xloc>448</xloc>
-      <yloc>192</yloc>
+      <xloc>560</xloc>
+      <yloc>208</yloc>
     </GUI>
   </transform>
   <transform_error_handling>

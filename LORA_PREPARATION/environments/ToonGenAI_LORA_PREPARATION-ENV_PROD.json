@@ -16,6 +16,14 @@
     "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\detect_wdtags_gpu.py",
     "description" : ""
   }, {
+    "name" : "classify_folders_by_character_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\classify_folders_by_character.py",
+    "description" : ""
+  }, {
+    "name" : "lookalike_images_by_wdtags_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\lookalike_images_by_wdtags.py",
+    "description" : ""
+  }, {
     "name" : "python_option_u",
     "value" : "-u",
     "description" : ""
