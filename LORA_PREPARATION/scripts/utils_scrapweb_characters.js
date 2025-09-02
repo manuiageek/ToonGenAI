@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 // CONFIG
 const BASE_URL = "https://myanimelist.net/anime/40128/Arte";
 const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\ARTE`;
-const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_CHARACTERS");
+const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
 // utils fichiers/réseau
 async function downloadImage(url, filePath) {
@@ -63,11 +63,15 @@ function sanitizeFilename(input, maxLength = 128) {
     url += "/characters";
   }
 
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    console.error(`Le dossier de sortie n'existe pas: ${OUTPUT_DIR}`);
+  // crée le dossier de sortie si absent
+            try {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    console.log(`Dossier de sortie: ${OUTPUT_DIR}`);
+  } catch (err) {
+    console.error(`Impossible de créer le dossier de sortie: ${OUTPUT_DIR}`);
+    console.error(err);
     process.exit(1);
   }
-  console.log(`Dossier de sortie: ${OUTPUT_DIR}`);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -79,7 +83,7 @@ function sanitizeFilename(input, maxLength = 128) {
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
   );
-            try {
+      try {
       await page.goto(url, { waitUntil: "networkidle2" });
       await page.waitForSelector("h3.h3_character_name", { timeout: 10000 });
     console.log("La page des personnages est chargée, début de l'extraction des liens...");

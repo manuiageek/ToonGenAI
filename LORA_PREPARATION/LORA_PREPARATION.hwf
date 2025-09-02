@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\GUY DOUBLE TARGET</default_value>
+      <default_value>D:\SHUUMATSU NO WALKURE</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -360,7 +360,7 @@
     <hop>
       <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
