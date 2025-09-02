@@ -3,6 +3,7 @@ import json
 import sqlite3
 import argparse
 import logging
+import random  # tirage aléatoire en cas d'ex aequo
 from typing import List, Optional, Tuple, Set
 
 # ==================== CONFIG ====================
@@ -107,17 +108,29 @@ def load_lookalike_candidates(conn: sqlite3.Connection) -> List[Candidate]:
     return candidates
 
 def match_lookalike(image_tags: List[str], candidates: List[Candidate], threshold: float) -> Optional[str]:
-    # Match par ratio sur set normalisés
+    # Parcours complet + sélection du meilleur
     imgset = normalize_tags(image_tags)
     if not imgset:
         return None
+
+    best_ratio = -1.0
+    best_chars: List[str] = []
+    eps = 1e-9
+
     for character, tagset, count in candidates:
         if count == 0:
             continue
         inter_size = len(imgset & tagset)
         ratio = inter_size / count
-        if ratio >= threshold:
-            return character
+        if ratio > best_ratio + eps:
+            best_ratio = ratio
+            best_chars = [character]
+        elif abs(ratio - best_ratio) <= eps:
+            best_chars.append(character)
+
+    if best_ratio >= threshold and best_chars:
+        return random.choice(best_chars)
+
     return None
 
 # ==================== MAIN ====================
@@ -132,7 +145,7 @@ def main() -> None:
     parser.add_argument(
         "--match-threshold",
         type=float,
-        default=0.6,
+        default=0.5,
         help="Seuil [0..1] de correspondance entre lookalike.wdtags et images.detect_wdtags"
     )
     args = parser.parse_args()
@@ -189,11 +202,17 @@ def main() -> None:
                 # R3: ni boy ni girl => fond
                 elif not has_boy and not has_girl:
                     target = "z_background"
-                # R4: matching lookalike par ratio
-                match = match_lookalike(tags, candidates, args.match_threshold)
-                if match is not None:
-                    target = match
-                    matched_characters += 1
+
+                # R4: matching lookalike seulement si pas de règle précédente
+                if target is None:
+                    match = match_lookalike(tags, candidates, args.match_threshold)
+                    if match is not None:
+                        target = match
+                        matched_characters += 1
+
+                # R5: fallback quand rien trouvé
+                if target is None:
+                    target = "z_misc"
 
                 if target is not None:
                     rc = update_lookalike(conn, str(image_path), target)
