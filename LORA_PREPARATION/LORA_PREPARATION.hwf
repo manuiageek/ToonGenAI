@@ -182,8 +182,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>416</xloc>
-      <yloc>352</yloc>
+      <xloc>656</xloc>
+      <yloc>240</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -212,8 +212,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>416</xloc>
-      <yloc>496</yloc>
+      <xloc>576</xloc>
+      <yloc>336</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -242,8 +242,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>416</xloc>
-      <yloc>592</yloc>
+      <xloc>576</xloc>
+      <yloc>432</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -273,7 +273,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>736</yloc>
+      <yloc>464</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -303,7 +303,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>832</yloc>
+      <yloc>560</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -353,16 +353,9 @@
     <hop>
       <from>3_DELETE_DUPLICATES.hpl</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
-      <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
     </hop>
     <hop>
       <from>Start</from>
@@ -374,7 +367,7 @@
     <hop>
       <from>Start</from>
       <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -399,6 +392,13 @@
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
+    <hop>
+      <from>Start</from>
+      <to>3_DELETE_DUPLICATES.hpl</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
   </hops>
   <notepads>
     <notepad>
@@ -416,8 +416,8 @@
       <fontname>Segoe UI</fontname>
       <fontsize>15</fontsize>
       <height>37</height>
-      <xloc>544</xloc>
-      <yloc>592</yloc>
+      <xloc>704</xloc>
+      <yloc>432</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>
@@ -436,8 +436,8 @@
       <fontname>Segoe UI</fontname>
       <fontsize>15</fontsize>
       <height>37</height>
-      <xloc>544</xloc>
-      <yloc>512</yloc>
+      <xloc>704</xloc>
+      <yloc>352</yloc>
       <note>&lt;-- la base SQLLITE.db doit exister dans le répertoire : SQLLITE_example</note>
       <width>632</width>
     </notepad>

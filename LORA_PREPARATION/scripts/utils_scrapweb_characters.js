@@ -4,7 +4,7 @@ import path from "path";
 import fetch from "node-fetch";
 
 // CONFIG
-const BASE_URL = "https://myanimelist.net/anime/40128/Arte";
+const BASE_URL = "https://myanimelist.net/anime/49618/Shuumatsu_no_Walk%C3%BCre_II/characters";
 const OUTPUT_ROOT_DIR = String.raw`D:\SHUUMATSU NO WALKURE`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
@@ -64,7 +64,7 @@ function sanitizeFilename(input, maxLength = 128) {
   }
 
   // crée le dossier de sortie si absent
-            try {
+  try {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     console.log(`Dossier de sortie: ${OUTPUT_DIR}`);
   } catch (err) {
