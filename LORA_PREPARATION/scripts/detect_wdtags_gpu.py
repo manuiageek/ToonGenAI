@@ -6,9 +6,10 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, UnidentifiedImageError
 import csv
-from typing import List, Optional
+from typing import List
 import sqlite3
-import argparse  # CLI
+import argparse
+from concurrent.futures import ThreadPoolExecutor
 
 # ==================== CONFIG ====================
 # Chemins modèle / tags
@@ -21,6 +22,7 @@ CHARACTER_THRESHOLD = 0.55
 INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 20
+BATCH_SIZE = 32
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
@@ -28,24 +30,32 @@ CHANNEL_ORDER = "BGR"
 NORMALIZATION = "none"
 
 # Providers
-DEFAULT_PROVIDERS = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+CUDA_PROVIDER_OPTIONS = {
+    "device_id": 0,
+    "arena_extend_strategy": "kNextPowerOfTwo",
+    "cudnn_conv_use_max_workspace": 1,
+    "do_copy_in_default_stream": 1,
+    "tunable_op_enable": 1,
+    "tunable_op_tuning_enable": 1,
+}
+DEFAULT_PROVIDERS = [("CUDAExecutionProvider", CUDA_PROVIDER_OPTIONS), "CPUExecutionProvider"]
 FORCE_CPU = False
 
 # SQLite
-DB_FILENAME = "SQLLITE.db"  # nom fixe du fichier
-SQLITE_QUERY = "select image_path from images"  # limit 10
+DB_FILENAME = "SQLLITE.db"
+SQLITE_QUERY = "select image_path from images"
 SQLITE_TABLE = "images"
 SQLITE_TAGS_COLUMN = "detect_wdtags"
-BATCH_COMMIT_SIZE = 1000  # commit par lots
+BATCH_COMMIT_SIZE = 1000
 
 # Characters dir + extensions images
-CHARACTERS_DIR_NAME = "_characters"  # dossier spécial
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}  # filtres images
+CHARACTERS_DIR_NAME = "_characters"
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 # Post-traitement IA lookalike
-LOOKALIKE_AI_ENABLED = True  # activation
-OPENAI_MODEL = "gpt-5-nano"  # modèle cible
-OPENAI_TIMEOUT = 30  # secondes
+LOOKALIKE_AI_ENABLED = True
+OPENAI_MODEL = "gpt-5-nano"
+OPENAI_TIMEOUT = 30
 MAX_AI_RETRIES = 3
 AI_RETRY_BACKOFF_SEC = 2
 
@@ -93,16 +103,24 @@ class WD14Tagger:
     def __init__(self):
         self.model_path = self.MODEL_ONNX_PATH
         self.tags_csv_path = self.TAGS_CSV_PATH
+
+        # Session ORT optimisée
+        so = ort.SessionOptions()
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        so.intra_op_num_threads = max(1, (os.cpu_count() or 8))
+        so.inter_op_num_threads = 1
+
         req_providers = ["CPUExecutionProvider"] if FORCE_CPU else list(DEFAULT_PROVIDERS)
         logger.info("Modèle ONNX: %s", os.path.abspath(self.model_path))
         logger.info("CSV Tags: %s", os.path.abspath(self.tags_csv_path))
         self.tags = self._load_tags(self.tags_csv_path)
-        self.session = self._create_session_with_fallback(req_providers)
+        self.session = self._create_session_with_fallback(req_providers, so)
         logger.info("Session ORT prête avec providers: %s", self.session.get_providers())
         self.input_layout = self._infer_input_layout()
         logger.info("Layout entrée modèle: %s", self.input_layout)
 
     def _load_tags(self, csv_path: str) -> List[str]:
+        # Chargement des tags
         tags: List[str] = []
         with open(csv_path, "r", encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
@@ -122,24 +140,41 @@ class WD14Tagger:
             raise ValueError("Aucun tag chargé depuis le CSV")
         return tags
 
-    def _create_session_with_fallback(self, providers: List[str]):
+    def _create_session_with_fallback(self, providers: List, so: ort.SessionOptions):
+        # Création session avec fallback GPU->CPU
         available = set(ort.get_available_providers())
-        filtered = [p for p in providers if p in available] or ["CPUExecutionProvider"]
+
+        def normalize(prov_list: List, with_options: bool) -> List:
+            out = []
+            for p in prov_list:
+                if isinstance(p, tuple):
+                    name, opts = p
+                    if name in available:
+                        out.append((name, opts) if with_options else name)
+                else:
+                    if p in available:
+                        out.append(p)
+            return out or ["CPUExecutionProvider"]
+
+        prov_with_opts = normalize(providers, True)
+        prov_plain = normalize(providers, False)
+
         logger.info("Providers demandés: %s", providers)
-        logger.info("Providers utilisés: %s", filtered)
+        logger.info("Providers dispo: %s", list(available))
         try:
-            return ort.InferenceSession(self.model_path, providers=filtered)
+            return ort.InferenceSession(self.model_path, sess_options=so, providers=prov_with_opts)
         except Exception as e:
-            if "CPUExecutionProvider" not in filtered:
-                try:
+            logger.warning("Echec providers avec options, tentative sans options: %s", e)
+            try:
+                return ort.InferenceSession(self.model_path, sess_options=so, providers=prov_plain)
+            except Exception as e2:
+                if "CPUExecutionProvider" not in prov_plain:
                     logger.warning("CUDA indisponible, bascule en CPU")
-                    return ort.InferenceSession(self.model_path, providers=["CPUExecutionProvider"])
-                except Exception as e2:
-                    logger.exception("Echec création session ORT même en CPU")
-                    raise RuntimeError(f"Echec création session ORT (CPU fallback). Cause initiale: {e}") from e2
-            raise
+                    return ort.InferenceSession(self.model_path, sess_options=so, providers=["CPUExecutionProvider"])
+                raise
 
     def _infer_input_layout(self) -> str:
+        # Détection layout entrée
         input_info = self.session.get_inputs()[0]
         shape = input_info.shape
         if len(shape) == 4:
@@ -152,6 +187,7 @@ class WD14Tagger:
         return "NHWC"
 
     def _preprocess(self, image_path: str) -> np.ndarray:
+        # Chargement + resize + normalisation
         if not os.path.isfile(image_path):
             raise FileNotFoundError(f"Image introuvable: {os.path.abspath(image_path)}")
         try:
@@ -181,7 +217,13 @@ class WD14Tagger:
 
         return arr.astype(np.float32)
 
+    def _preprocess_no_batch(self, image_path: str) -> np.ndarray:
+        # Préproc sans dimension batch
+        arr = self._preprocess(image_path)
+        return arr[0]
+
     def _apply_thresholds(self, tag: str, score: float) -> bool:
+        # Seuils par famille
         if tag.startswith("character:"):
             return score >= CHARACTER_THRESHOLD
         if tag.startswith("rating:"):
@@ -191,12 +233,14 @@ class WD14Tagger:
         return score >= GENERAL_THRESHOLD
 
     def _clean_tag(self, tag: str) -> str:
+        # Nettoyage format tag
         t = tag.split(":", 1)[1] if ":" in tag else tag
         if REMOVE_UNDERSCORES:
             t = t.replace("_", " ")
         return t
 
     def process(self, image_path: str) -> List[str]:
+        # Inférence single
         input_tensor = self._preprocess(image_path)
         input_name = self.session.get_inputs()[0].name
         outputs = self.session.run(None, {input_name: input_tensor})
@@ -210,6 +254,35 @@ class WD14Tagger:
                 scored.append((self._clean_tag(tag), s))
         scored.sort(key=lambda x: x[1], reverse=True)
         return [t for t, _ in scored]
+
+    def process_batch(self, image_paths: List[str]) -> List[List[str]]:
+        # Inférence par lot GPU
+        if not image_paths:
+            return []
+        input_name = self.session.get_inputs()[0].name
+
+        # Prétraitement concurrent
+        max_workers = min(32, max(4, (os.cpu_count() or 8)))
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            batch = list(ex.map(self._preprocess_no_batch, image_paths))
+
+        batch_input = np.stack(batch, axis=0).astype(np.float32)
+        outputs = self.session.run(None, {input_name: batch_input})
+        probs = outputs[0]
+
+        results: List[List[str]] = []
+        for row in probs:
+            scored = []
+            for tag, score in zip(self.tags, row):
+                s = float(score)
+                if self._apply_thresholds(tag, s):
+                    scored.append((self._clean_tag(tag), s))
+            scored.sort(key=lambda x: x[1], reverse=True)
+            tags = [t for t, _ in scored]
+            if TOPK_OUTPUT and TOPK_OUTPUT > 0:
+                tags = tags[:TOPK_OUTPUT]
+            results.append(tags)
+        return results
 
 # ==================== SQLITE ====================
 def fetch_image_paths(conn: sqlite3.Connection, query: str) -> List[str]:
@@ -259,7 +332,6 @@ def upsert_lookalike(conn: sqlite3.Connection, character_name: str, tags_json: s
     return cur.rowcount
 
 # ==== OpenAI post-traitement ====
-# ==== OpenAI post-traitement ====
 def _sanitize_json_block(s: str) -> str:
     # Nettoyage éventuels fences
     s = s.strip()
@@ -287,14 +359,14 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         logger.warning("SDK OpenAI non disponible, post-traitement IA ignoré")
         return tags
 
-    client = OpenAI(api_key=api_key)  # instanciation correcte
+    client = OpenAI(api_key=api_key)
 
     system_msg = (
         "Retire les informations sur l'habillement de la liste des tags. "
         "Retire les tags comme 'solo', '1girl' ou '1boy'. "
         "Retire les tags qui font référence à un style en particulier. "
         "Retire les tags sont ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' et autres du même genre. "
-        "Retire les tags suivants 'looking at viewer' 'portrait'. "
+        "Retire les tags suivants 'looking at viewer' 'portrait' 'solo'. "
         "Réponds uniquement par une liste JSON de chaînes."
     )
     user_msg = json.dumps(tags, ensure_ascii=False)
@@ -325,23 +397,21 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         except Exception as e:
             msg = str(e)
             logger.warning("Erreur IA tentative %d/%d: %s", attempt, MAX_AI_RETRIES, msg)
-
             lower = msg.lower()
             if ("model" in lower or "unsupported" in lower or "not found" in lower) and current_model != "gpt-4.1-nano":
                 logger.info("Fallback modèle vers gpt-4.1-nano")
                 current_model = "gpt-4.1-nano"
                 continue
-
             if attempt < MAX_AI_RETRIES:
                 time.sleep(AI_RETRY_BACKOFF_SEC)
             else:
                 logger.warning("Post-traitement IA abandonné, conservation des tags d'origine")
-
+                break
     return tags
 
 # ==== Job _characters ====
 def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
-    # Boucle _characters -> table lookalike + IA
+    # Boucle _characters en batch + IA
     logger.info("Début traitement lookalike pour: %s", characters_dir)
     if not os.path.isdir(characters_dir):
         logger.info("Dossier _characters absent, skip")
@@ -360,39 +430,52 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
         errors = 0
         processed_since_commit = 0
 
-        for fp in iter_image_files(characters_dir):
+        batch: List[str] = []
+
+        def flush_batch(paths: List[str]) -> None:
+            nonlocal processed, upserts, processed_since_commit, errors
+            if not paths:
+                return
             try:
                 t1 = time.perf_counter()
-                tags = tagger.process(fp)
-                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
-                    tags = tags[:TOPK_OUTPUT]
+                batch_tags = tagger.process_batch(paths)
                 dt = time.perf_counter() - t1
 
-                # Résultat final = tags filtrés par IA
-                final_tags = ai_refine_tags(tags) if LOOKALIKE_AI_ENABLED else tags
-                tags_json = json.dumps(final_tags, ensure_ascii=False)
-                character_name = os.path.splitext(os.path.basename(fp))[0]
+                for fp, tags in zip(paths, batch_tags):
+                    final_tags = ai_refine_tags(tags) if LOOKALIKE_AI_ENABLED else tags
+                    tags_json = json.dumps(final_tags, ensure_ascii=False)
+                    character_name = os.path.splitext(os.path.basename(fp))[0]
 
-                rc = upsert_lookalike(conn, character_name, tags_json)
-                upserts += rc
-                processed += 1
-                processed_since_commit += 1
+                    rc = upsert_lookalike(conn, character_name, tags_json)
+                    upserts += rc
+                    processed += 1
+                    processed_since_commit += 1
 
-                payload = {
-                    "character": character_name,
-                    "tags": final_tags,
-                    "infer_sec": round(dt, 3),
-                }
-                print(json.dumps(payload, ensure_ascii=False))
+                    payload = {
+                        "character": character_name,
+                        "tags": final_tags,
+                        "infer_sec": round(dt / max(1, len(paths)), 3),
+                    }
+                    print(json.dumps(payload, ensure_ascii=False))
+            except Exception:
+                errors += len(paths)
+                logger.exception("Echec traitement batch lookalike")
 
+        for fp in iter_image_files(characters_dir):
+            batch.append(fp)
+            if len(batch) >= BATCH_SIZE:
+                flush_batch(batch)
+                batch = []
                 if processed_since_commit >= BATCH_COMMIT_SIZE:
                     conn.commit()
-                    logger.info("Commit intermédiaire lookalike après %d fichiers (UPSERT cumulés=%d)", processed_since_commit, upserts)
+                    logger.info(
+                        "Commit intermédiaire lookalike après %d fichiers (UPSERT cumulés=%d)",
+                        processed_since_commit,
+                        upserts,
+                    )
                     processed_since_commit = 0
-            except Exception:
-                errors += 1
-                logger.exception("Echec traitement lookalike: %s", fp)
 
+        flush_batch(batch)
         conn.commit()
         logger.info("Lookalike terminé. OK=%d, UPSERT=%d, erreurs=%d", processed, upserts, errors)
     finally:
@@ -400,14 +483,14 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
 
 # ==================== MAIN LOOP ====================
 def run_sqlite_job(db_path: str) -> None:
-    # Boucle principale SQLite
+    # Boucle principale SQLite en batch
     logger.info("Début traitement SQLite")
     if not os.path.isfile(db_path):
         raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
 
     conn = sqlite3.connect(db_path)
     try:
-        paths = fetch_image_paths(conn, SQLITED_QUERY if (SQLITED_QUERY := SQLITE_QUERY) else SQLITE_QUERY)
+        paths = fetch_image_paths(conn, SQLITE_QUERY)
         logger.info("Chemins récupérés: %d", len(paths))
 
         tagger = WD14Tagger()
@@ -417,31 +500,38 @@ def run_sqlite_job(db_path: str) -> None:
         errors = 0
         processed_since_commit = 0
 
-        for raw_p in paths:
-            p = os.path.normpath(str(raw_p).strip())
+        for i in range(0, len(paths), BATCH_SIZE):
+            batch_paths = paths[i:i + BATCH_SIZE]
             try:
                 t1 = time.perf_counter()
-                tags = tagger.process(p)
-                if TOPK_OUTPUT and TOPK_OUTPUT > 0:
-                    tags = tags[:TOPK_OUTPUT]
+                batch_tags = tagger.process_batch(batch_paths)
                 dt = time.perf_counter() - t1
-                tags_json = json.dumps(tags, ensure_ascii=False)
 
-                rc = update_detect_wdtag(conn, raw_p, tags_json)
-                updated += rc
-                processed += 1
-                processed_since_commit += 1
+                for raw_p, tags in zip(batch_paths, batch_tags):
+                    tags_json = json.dumps(tags, ensure_ascii=False)
+                    rc = update_detect_wdtag(conn, raw_p, tags_json)
+                    updated += rc
+                    processed += 1
+                    processed_since_commit += 1
 
-                payload = {"image_path": raw_p, "tags": tags, "infer_sec": round(dt, 3)}
-                print(json.dumps(payload, ensure_ascii=False))
+                    payload = {
+                        "image_path": raw_p,
+                        "tags": tags,
+                        "infer_sec": round(dt / max(1, len(batch_paths)), 3),
+                    }
+                    print(json.dumps(payload, ensure_ascii=False))
 
                 if processed_since_commit >= BATCH_COMMIT_SIZE:
                     conn.commit()
-                    logger.info("Commit intermédiaire après %d lignes OK (MAJ cumulées=%d)", processed_since_commit, updated)
+                    logger.info(
+                        "Commit intermédiaire après %d lignes OK (MAJ cumulées=%d)",
+                        processed_since_commit,
+                        updated,
+                    )
                     processed_since_commit = 0
             except Exception:
-                errors += 1
-                logger.exception("Echec traitement: %s", raw_p)
+                errors += len(batch_paths)
+                logger.exception("Echec traitement batch [%d:%d]", i, i + len(batch_paths))
 
         conn.commit()
         logger.info("Terminé. OK=%d, MAJ=%d, erreurs=%d", processed, updated, errors)
@@ -462,14 +552,24 @@ if __name__ == "__main__":
         default=r"T:\_SELECT\READY\GUY DOUBLE TARGET",
         help="Repertoire contenant SQLLITE.db"
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=BATCH_SIZE,
+        help="Taille de lot pour l'inférence GPU"
+    )
     args = parser.parse_args()
 
     base_dir = os.path.normpath(args.directory)
     if not os.path.isdir(base_dir):
         raise FileNotFoundError(f"Répertoire introuvable: {base_dir}")
 
+    # Ajustement dynamique BATCH_SIZE
+    BATCH_SIZE = max(1, int(args.batch_size))
+
     sqlite_db_path = build_db_path_from_dir(base_dir)
     logger.info("Base SQLite résolue: %s", sqlite_db_path)
+    logger.info("Batch size: %d", BATCH_SIZE)
 
     # Traitement principal
     run_sqlite_job(sqlite_db_path)
