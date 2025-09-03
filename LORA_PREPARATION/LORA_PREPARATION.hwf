@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\SHUUMATSU NO WALKURE</default_value>
+      <default_value>T:\_SELECT\READY\2.5-JIGEN NO RIRISA</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -212,8 +212,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>560</xloc>
-      <yloc>288</yloc>
+      <xloc>544</xloc>
+      <yloc>272</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -243,7 +243,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>544</xloc>
-      <yloc>432</yloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -353,7 +353,7 @@
     <hop>
       <from>3_DELETE_DUPLICATES.hpl</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -366,15 +366,8 @@
     </hop>
     <hop>
       <from>Start</from>
-      <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -395,9 +388,30 @@
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>7_LOOKALIKE_IMAGES.hpl</from>
+      <to>8_CLASSIFY_IMAGES.hpl</to>
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>5_IMG_TO_SQLLITE.hpl</from>
+      <to>6_SQLLITE_WDTAG.hpl</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>6_SQLLITE_WDTAG.hpl</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
     </hop>
   </hops>
   <notepads>
@@ -417,7 +431,7 @@
       <fontsize>15</fontsize>
       <height>37</height>
       <xloc>672</xloc>
-      <yloc>432</yloc>
+      <yloc>384</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>
@@ -437,7 +451,7 @@
       <fontsize>15</fontsize>
       <height>37</height>
       <xloc>672</xloc>
-      <yloc>288</yloc>
+      <yloc>272</yloc>
       <note>&lt;-- la base SQLLITE.db doit exister dans le répertoire : SQLLITE_example</note>
       <width>632</width>
     </notepad>
