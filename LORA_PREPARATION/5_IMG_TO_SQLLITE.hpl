@@ -11,7 +11,7 @@
     <parameters>
       <parameter>
         <name>anime_folder_param</name>
-        <default_value>T:\_SELECT\READY\GUY DOUBLE TARGET</default_value>
+        <default_value>T:\_SELECT\READY\DEKIRU NEKO</default_value>
         <description/>
       </parameter>
     </parameters>
@@ -83,8 +83,8 @@
     </fields>
     <attributes/>
     <GUI>
-      <xloc>400</xloc>
-      <yloc>64</yloc>
+      <xloc>512</xloc>
+      <yloc>160</yloc>
     </GUI>
   </transform>
   <transform>
@@ -116,8 +116,8 @@
     <rownum>N</rownum>
     <attributes/>
     <GUI>
-      <xloc>96</xloc>
-      <yloc>64</yloc>
+      <xloc>208</xloc>
+      <yloc>160</yloc>
     </GUI>
   </transform>
   <transform>
@@ -201,8 +201,8 @@
     </fields>
     <attributes/>
     <GUI>
-      <xloc>256</xloc>
-      <yloc>64</yloc>
+      <xloc>368</xloc>
+      <yloc>160</yloc>
     </GUI>
   </transform>
   <transform>
@@ -242,8 +242,8 @@
     <use_batch>Y</use_batch>
     <attributes/>
     <GUI>
-      <xloc>544</xloc>
-      <yloc>64</yloc>
+      <xloc>656</xloc>
+      <yloc>160</yloc>
     </GUI>
   </transform>
   <transform_error_handling>

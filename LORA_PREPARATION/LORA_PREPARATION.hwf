@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\2.5-JIGEN NO RIRISA</default_value>
+      <default_value>T:\_SELECT\READY\DEKIRU NEKO</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -212,8 +212,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>544</xloc>
-      <yloc>272</yloc>
+      <xloc>1104</xloc>
+      <yloc>288</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -242,8 +242,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>544</xloc>
-      <yloc>384</yloc>
+      <xloc>512</xloc>
+      <yloc>416</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -272,7 +272,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>544</xloc>
+      <xloc>512</xloc>
       <yloc>528</yloc>
       <attributes_hac/>
     </action>
@@ -302,8 +302,56 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>544</xloc>
+      <xloc>512</xloc>
       <yloc>624</yloc>
+      <attributes_hac/>
+    </action>
+    <action>
+      <name>File SQLLITE.db exists ?</name>
+      <description/>
+      <type>FILE_EXISTS</type>
+      <attributes/>
+      <filename>${anime_folder_param}/SQLLITE.db</filename>
+      <parallel>N</parallel>
+      <xloc>512</xloc>
+      <yloc>288</yloc>
+      <attributes_hac/>
+    </action>
+    <action>
+      <name>Dummy</name>
+      <description/>
+      <type>DUMMY</type>
+      <attributes/>
+      <parallel>N</parallel>
+      <xloc>880</xloc>
+      <yloc>288</yloc>
+      <attributes_hac/>
+    </action>
+    <action>
+      <name>Copy files</name>
+      <description/>
+      <type>COPY_FILES</type>
+      <attributes/>
+      <copy_empty_folders>N</copy_empty_folders>
+      <arg_from_previous>N</arg_from_previous>
+      <overwrite_files>N</overwrite_files>
+      <include_subfolders>N</include_subfolders>
+      <remove_source_files>N</remove_source_files>
+      <add_result_filesname>N</add_result_filesname>
+      <destination_is_a_file>N</destination_is_a_file>
+      <create_destination_folder>N</create_destination_folder>
+      <fields>
+        <field>
+          <source_filefolder>EMPTY_SOURCE_URL-0-${PROJECT_HOME}/LORA_PREPARATION/scripts/SQLLITE_example/SQLLITE.db</source_filefolder>
+          <source_configuration_name>STATIC-SOURCE-FILE-0</source_configuration_name>
+          <destination_filefolder>EMPTY_DEST_URL-0-${anime_folder_param}</destination_filefolder>
+          <destination_configuration_name>STATIC-DEST-FILE-0</destination_configuration_name>
+          <wildcard/>
+        </field>
+      </fields>
+      <parallel>N</parallel>
+      <xloc>688</xloc>
+      <yloc>240</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -359,15 +407,8 @@
     </hop>
     <hop>
       <from>Start</from>
-      <to>5_IMG_TO_SQLLITE.hpl</to>
-      <enabled>N</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -381,14 +422,14 @@
     <hop>
       <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -413,6 +454,48 @@
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
+    <hop>
+      <from>File SQLLITE.db exists ?</from>
+      <to>Copy files</to>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Copy files</from>
+      <to>Dummy</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>File SQLLITE.db exists ?</from>
+      <to>Dummy</to>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>Dummy</from>
+      <to>5_IMG_TO_SQLLITE.hpl</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>3_DELETE_DUPLICATES.hpl</from>
+      <to>File SQLLITE.db exists ?</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>File SQLLITE.db exists ?</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
   </hops>
   <notepads>
     <notepad>
@@ -430,30 +513,10 @@
       <fontname>Segoe UI</fontname>
       <fontsize>15</fontsize>
       <height>37</height>
-      <xloc>672</xloc>
-      <yloc>384</yloc>
+      <xloc>640</xloc>
+      <yloc>432</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
-    </notepad>
-    <notepad>
-      <backgroundcolorblue>251</backgroundcolorblue>
-      <backgroundcolorgreen>232</backgroundcolorgreen>
-      <backgroundcolorred>201</backgroundcolorred>
-      <bordercolorblue>90</bordercolorblue>
-      <bordercolorgreen>58</bordercolorgreen>
-      <bordercolorred>14</bordercolorred>
-      <fontbold>N</fontbold>
-      <fontcolorblue>90</fontcolorblue>
-      <fontcolorgreen>58</fontcolorgreen>
-      <fontcolorred>14</fontcolorred>
-      <fontitalic>N</fontitalic>
-      <fontname>Segoe UI</fontname>
-      <fontsize>15</fontsize>
-      <height>37</height>
-      <xloc>672</xloc>
-      <yloc>272</yloc>
-      <note>&lt;-- la base SQLLITE.db doit exister dans le répertoire : SQLLITE_example</note>
-      <width>632</width>
     </notepad>
   </notepads>
   <attributes/>
