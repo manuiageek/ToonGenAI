@@ -364,9 +364,10 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
     system_msg = (
         "Retire les informations sur l'habillement de la liste des tags. "
         "Retire les tags comme 'solo', '1girl' ou '1boy'. "
-        "Retire les tags qui font référence à un style en particulier. "
-        "Retire les tags sont ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' et autres du même genre. "
-        "Retire les tags suivants 'looking at viewer' 'portrait' 'solo'. "
+        "Retire les tags fasait référence au breast tel que 'breasts', 'large breasts', 'cleavage' et autres. "
+        "Retire les tags qui ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' et autres du même genre. "
+        "Retire les tags sur les prises de vues tel que 'looking at viewer', 'upper body', 'portrait' et autres. "        
+        "Retire les tags qui décrivent le background tel que 'white background', 'simple background' et autres ."
         "Réponds uniquement par une liste JSON de chaînes."
     )
     user_msg = json.dumps(tags, ensure_ascii=False)
@@ -549,7 +550,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--directory",
         type=str,
-        default=r"T:\_SELECT\READY\GUY DOUBLE TARGET",
+        default=r"T:\_SELECT\READY\2.5-JIGEN NO RIRISA",
         help="Repertoire contenant SQLLITE.db"
     )
     parser.add_argument(
@@ -557,6 +558,11 @@ if __name__ == "__main__":
         type=int,
         default=BATCH_SIZE,
         help="Taille de lot pour l'inférence GPU"
+    )
+    parser.add_argument(
+        "--chars-only",
+        action="store_true",
+        help="Ne traiter que le dossier _characters et la table lookalike (avec post-traitement OpenAI)"
     )
     args = parser.parse_args()
 
@@ -571,13 +577,22 @@ if __name__ == "__main__":
     logger.info("Base SQLite résolue: %s", sqlite_db_path)
     logger.info("Batch size: %d", BATCH_SIZE)
 
-    # Traitement principal
-    run_sqlite_job(sqlite_db_path)
-
-    # Traitement _characters -> table lookalike + IA
     characters_dir = os.path.join(base_dir, CHARACTERS_DIR_NAME)
-    if os.path.isdir(characters_dir):
-        logger.info("Dossier _characters détecté: %s", characters_dir)
-        run_characters_dir_job(sqlite_db_path, characters_dir)
+
+    # Mode chars-only
+    if args.chars_only:
+        logger.info("Mode --chars-only activé: exécution uniquement du job lookalike")
+        if os.path.isdir(characters_dir):
+            logger.info("Dossier _characters détecté: %s", characters_dir)
+            run_characters_dir_job(sqlite_db_path, characters_dir)
+        else:
+            logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
     else:
-        logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
+        # Traitement principal
+        run_sqlite_job(sqlite_db_path)
+        # Traitement _characters -> table lookalike + IA
+        if os.path.isdir(characters_dir):
+            logger.info("Dossier _characters détecté: %s", characters_dir)
+            run_characters_dir_job(sqlite_db_path, characters_dir)
+        else:
+            logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
