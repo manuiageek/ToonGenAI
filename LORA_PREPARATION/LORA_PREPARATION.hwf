@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\DEKIRU NEKO</default_value>
+      <default_value>T:\_SELECT\READY\ARTE</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -408,7 +408,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -422,7 +422,7 @@
     <hop>
       <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>

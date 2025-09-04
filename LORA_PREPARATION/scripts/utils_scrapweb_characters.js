@@ -4,8 +4,8 @@ import path from "path";
 import fetch from "node-fetch";
 
 // CONFIG
-const BASE_URL = "https://myanimelist.net/anime/53802/25-jigen_no_Ririsa/characters";
-const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\2.5-JIGEN NO RIRISA`;
+const BASE_URL = "https://myanimelist.net/anime/22199/Akame_ga_Kill/characters";
+const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\AKAME GA KILL`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
 // utils fichiers/réseau

@@ -52,12 +52,8 @@ BATCH_COMMIT_SIZE = 1000
 CHARACTERS_DIR_NAME = "_characters"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
-# Post-traitement IA lookalike
+# Post-traitement IA
 LOOKALIKE_AI_ENABLED = True
-OPENAI_MODEL = "gpt-5-nano"
-OPENAI_TIMEOUT = 30
-MAX_AI_RETRIES = 3
-AI_RETRY_BACKOFF_SEC = 2
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -348,6 +344,7 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
     # Filtrage IA des tags
     if not LOOKALIKE_AI_ENABLED:
         return tags
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         logger.warning("OPENAI_API_KEY manquante, post-traitement IA ignoré")
@@ -360,55 +357,118 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         return tags
 
     client = OpenAI(api_key=api_key)
+    try:
+        client = client.with_options(timeout=30)
+    except Exception:
+        pass
 
     system_msg = (
-        "Retire les informations sur l'habillement de la liste des tags. "
-        "Retire les tags comme 'solo', '1girl' ou '1boy'. "
-        "Retire les tags fasait référence au breast tel que 'breasts', 'large breasts', 'cleavage' et autres. "
-        "Retire les tags qui ont attrait à l'état de la personne tel que 'expressionless' 'male focus' 'closed mouth' et autres du même genre. "
-        "Retire les tags sur les prises de vues tel que 'looking at viewer', 'upper body', 'portrait' et autres. "        
-        "Retire les tags qui décrivent le background tel que 'white background', 'simple background' et autres ."
-        "Réponds uniquement par une liste JSON de chaînes."
+        "Tu es un assistant qui filtre des listes de tags. "
+        "Retire les tags d'habillement, 'solo', '1girl', '1boy', "
+        "ceux liés à la poitrine 'breast', l'état de la personne 'smile', 'open mouth','sensitive', "
+        "les prises de vues 'looking at viewer' et autres, "
+        "les tags relatifs au background 'outdoors' et autres. "
+        "Réponds UNIQUEMENT avec un objet JSON valide."
     )
-    user_msg = json.dumps(tags, ensure_ascii=False)
+    user_msg = f"Filtre cette liste de tags : {json.dumps(tags, ensure_ascii=False)}"
 
-    current_model = OPENAI_MODEL
-    for attempt in range(1, MAX_AI_RETRIES + 1):
+    json_schema = {
+        "name": "filtered_tags",
+        "schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "tags": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["tags"]
+        }
+    }
+
+    model = "gpt-4o-mini"
+
+    for attempt in range(1, 4):
         try:
-            resp = client.chat.completions.create(
-                model=current_model,
-                messages=[
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": user_msg},
-                ],
-                timeout=OPENAI_TIMEOUT,
-            )
-            content = (resp.choices[0].message.content or "").strip()
+            content = None
+
+            # Appel Responses prioritaire
+            try:
+                resp = client.responses.create(
+                    model=model,
+                    input=[
+                        {"role": "system", "content": [{"type": "text", "text": system_msg}]},
+                        {"role": "user", "content": [{"type": "text", "text": user_msg}]},
+                    ],
+                    response_format={"type": "json_schema", "json_schema": json_schema},
+                    temperature=0,
+                    max_output_tokens=512,
+                )
+                if hasattr(resp, "output_text") and resp.output_text:
+                    content = resp.output_text.strip()
+                else:
+                    try:
+                        resp_dict = resp.model_dump() if hasattr(resp, "model_dump") else getattr(resp, "__dict__", {})
+                        content = resp_dict.get("output_text")
+                        if not content:
+                            output = resp_dict.get("output", []) or []
+                            texts = []
+                            for block in output:
+                                typ = block.get("type") if isinstance(block, dict) else getattr(block, "type", None)
+                                if typ == "output_text":
+                                    texts.append(block.get("text") if isinstance(block, dict) else getattr(block, "text", ""))
+                            content = ("".join(texts)).strip() if texts else None
+                    except Exception:
+                        content = None
+
+            except Exception as e_resp:
+                logger.debug(f"Responses API indisponible (tentative {attempt}): {e_resp}")
+                # Fallback Chat Completions propre
+                try:
+                    chat = client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system_msg},
+                            {"role": "user", "content": user_msg},
+                        ],
+                        response_format={"type": "json_object"},
+                        temperature=0,
+                        max_tokens=512,
+                    )
+                    if chat and getattr(chat, "choices", None):
+                        content = chat.choices[0].message.content.strip()
+                except Exception as e_chat:
+                    logger.debug(f"Echec Chat Completions fallback: {e_chat}")
+                    raise
+
+            if not content:
+                raise RuntimeError("Réponse vide depuis l'API OpenAI")
+
             content = _sanitize_json_block(content)
+
+            # Parsing JSON robuste
             try:
                 data = json.loads(content)
-                if isinstance(data, list) and all(isinstance(x, str) for x in data):
+                if isinstance(data, dict):
+                    for key in ["tags", "filtered_tags", "result", "items"]:
+                        val = data.get(key)
+                        if isinstance(val, list):
+                            return [str(x) for x in val if isinstance(x, str)]
+                elif isinstance(data, list) and all(isinstance(x, str) for x in data):
                     return data
-                if isinstance(data, dict) and "tags" in data and isinstance(data["tags"], list):
-                    return [str(x) for x in data["tags"]]
-            except Exception:
+            except json.JSONDecodeError:
                 pass
-            logger.warning("Réponse IA non JSON valide, conservation des tags d'origine")
-            return tags
+
+            logger.warning(f"Réponse IA invalide tentative {attempt}: {content[:120]}...")
+
         except Exception as e:
-            msg = str(e)
-            logger.warning("Erreur IA tentative %d/%d: %s", attempt, MAX_AI_RETRIES, msg)
-            lower = msg.lower()
-            if ("model" in lower or "unsupported" in lower or "not found" in lower) and current_model != "gpt-4.1-nano":
-                logger.info("Fallback modèle vers gpt-4.1-nano")
-                current_model = "gpt-4.1-nano"
-                continue
-            if attempt < MAX_AI_RETRIES:
-                time.sleep(AI_RETRY_BACKOFF_SEC)
-            else:
-                logger.warning("Post-traitement IA abandonné, conservation des tags d'origine")
-                break
+            logger.warning(f"Erreur IA tentative {attempt}/3: {str(e)}")
+            if attempt < 3:
+                time.sleep(2)
+            continue
+
+    logger.warning("Post-traitement IA échoué, conservation des tags originaux")
     return tags
+
+
 
 # ==== Job _characters ====
 def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
@@ -434,6 +494,7 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
         batch: List[str] = []
 
         def flush_batch(paths: List[str]) -> None:
+            # Exécution d'un lot
             nonlocal processed, upserts, processed_since_commit, errors
             if not paths:
                 return
@@ -550,7 +611,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--directory",
         type=str,
-        default=r"T:\_SELECT\READY\2.5-JIGEN NO RIRISA",
+        default=r"T:\_SELECT\READY\ARTE",
         help="Repertoire contenant SQLLITE.db"
     )
     parser.add_argument(
