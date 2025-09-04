@@ -3,7 +3,7 @@ import json
 import sqlite3
 import argparse
 import logging
-import random  # tirage aléatoire en cas d'ex aequo
+import random
 from typing import List, Optional, Tuple, Set
 
 # ==================== CONFIG ====================
@@ -133,6 +133,38 @@ def match_lookalike(image_tags: List[str], candidates: List[Candidate], threshol
 
     return None
 
+def decide_target(image_tags: List[str], candidates: List[Candidate], threshold: float) -> str:
+    # Règles de classement
+    has_boy = contains_substr(image_tags, "boy")
+    has_girl = contains_substr(image_tags, "girl")
+    has_monochrome = contains_substr(image_tags, "monochrome")
+    has_closed = contains_substr(image_tags, "closed_eyes")
+
+    target: Optional[str] = None
+
+    # R1: boy seul
+    if has_boy and not has_girl:
+        target = "z_boy"
+    # R2: monochrome
+    elif has_monochrome:
+        target = "z_monochrome"
+    # R3: closed_eyes
+    elif has_closed:
+        target = "z_closed_eyes"
+    # R4: ni boy ni girl => fond
+    elif not has_boy and not has_girl:
+        target = "z_background"
+
+    # R5: matching lookalike sinon
+    if target is None:
+        match = match_lookalike(image_tags, candidates, threshold)
+        if match is not None:
+            target = match
+        else:
+            target = "z_misc"
+
+    return target
+
 # ==================== MAIN ====================
 def main() -> None:
     parser = argparse.ArgumentParser(description="Règles lookalike + matching par wdtags")
@@ -145,7 +177,7 @@ def main() -> None:
     parser.add_argument(
         "--match-threshold",
         type=float,
-        default=0.5,
+        default=0.65,
         help="Seuil [0..1] de correspondance entre lookalike.wdtags et images.detect_wdtags"
     )
     args = parser.parse_args()
@@ -187,37 +219,15 @@ def main() -> None:
 
                 tags = parse_tags(tags_json)
 
-                has_boy = contains_substr(tags, "boy")
-                has_girl = contains_substr(tags, "girl")
-                has_closed = contains_substr(tags, "closed_eyes")
-
-                target: Optional[str] = None
-
-                # R1: boy seul
-                if has_boy and not has_girl:
-                    target = "z_boy"
-                # R2: si R1 non remplie et closed_eyes
-                elif has_closed:
-                    target = "z_closed_eyes"
-                # R3: ni boy ni girl => fond
-                elif not has_boy and not has_girl:
-                    target = "z_background"
-
-                # R4: matching lookalike seulement si pas de règle précédente
-                if target is None:
-                    match = match_lookalike(tags, candidates, args.match_threshold)
-                    if match is not None:
-                        target = match
-                        matched_characters += 1
-
-                # R5: fallback quand rien trouvé
-                if target is None:
-                    target = "z_misc"
+                # Décision centralisée
+                target = decide_target(tags, candidates, args.match_threshold)
 
                 if target is not None:
                     rc = update_lookalike(conn, str(image_path), target)
                     updated += rc
                     since_commit += rc
+                    if target not in ("z_boy", "z_monochrome", "z_closed_eyes", "z_background", "z_misc"):
+                        matched_characters += 1
 
                 processed += 1
 

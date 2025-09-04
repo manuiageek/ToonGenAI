@@ -401,14 +401,14 @@
     <hop>
       <from>3_DELETE_DUPLICATES.hpl</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -422,7 +422,7 @@
     <hop>
       <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -485,7 +485,7 @@
     <hop>
       <from>3_DELETE_DUPLICATES.hpl</from>
       <to>File SQLLITE.db exists ?</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -495,6 +495,13 @@
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>4_DELETE_NON_PERSON.hpl</from>
+      <to>File SQLLITE.db exists ?</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
     </hop>
   </hops>
   <notepads>
