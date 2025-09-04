@@ -366,7 +366,7 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         "Tu es un assistant qui filtre des listes de tags. "
         "Retire les tags d'habillement, 'solo', '1girl', '1boy', "
         "ceux liés à la poitrine 'breast', l'état de la personne 'smile', 'open mouth','sensitive', "
-        "les prises de vues 'looking at viewer' et autres, "
+        "les prises de vues 'looking at viewer', 'upper body', 'portrait' et autres, "
         "les tags relatifs au background 'outdoors' et autres. "
         "Réponds UNIQUEMENT avec un objet JSON valide."
     )
