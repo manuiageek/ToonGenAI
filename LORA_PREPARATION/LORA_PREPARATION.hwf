@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\AKAME GA KILL</default_value>
+      <default_value>T:\_SELECT\READY\BOTSURAKU YOTEI NO KIZOKU</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -435,13 +435,6 @@
     </hop>
     <hop>
       <from>Start</from>
-      <to>8_CLASSIFY_IMAGES.hpl</to>
-      <enabled>N</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
@@ -450,7 +443,7 @@
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -530,13 +523,6 @@
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
-      <to>Switch OFF windows</to>
-      <enabled>N</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
     </hop>
   </hops>
   <notepads>

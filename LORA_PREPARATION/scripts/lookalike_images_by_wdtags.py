@@ -177,7 +177,7 @@ def main() -> None:
     parser.add_argument(
         "--match-threshold",
         type=float,
-        default=0.55,
+        default=0.5,
         help="Seuil [0..1] de correspondance entre lookalike.wdtags et images.detect_wdtags"
     )
     args = parser.parse_args()
