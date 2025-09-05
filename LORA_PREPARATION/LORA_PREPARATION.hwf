@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\ARTE</default_value>
+      <default_value>T:\_SELECT\READY\AKAME GA KILL</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -354,6 +354,27 @@
       <yloc>240</yloc>
       <attributes_hac/>
     </action>
+    <action>
+      <name>Switch OFF windows</name>
+      <description/>
+      <type>SHELL</type>
+      <attributes/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <arg_from_previous>N</arg_from_previous>
+      <arguments>
+</arguments>
+      <exec_per_row>N</exec_per_row>
+      <insertScript>Y</insertScript>
+      <loglevel>Basic</loglevel>
+      <script>shutdown /s /t 60</script>
+      <set_append_logfile>N</set_append_logfile>
+      <set_logfile>N</set_logfile>
+      <parallel>N</parallel>
+      <xloc>768</xloc>
+      <yloc>624</yloc>
+      <attributes_hac/>
+    </action>
   </actions>
   <hops>
     <hop>
@@ -502,6 +523,20 @@
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>8_CLASSIFY_IMAGES.hpl</from>
+      <to>Switch OFF windows</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>Switch OFF windows</to>
+      <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
     </hop>
   </hops>
   <notepads>
