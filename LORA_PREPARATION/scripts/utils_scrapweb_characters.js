@@ -4,8 +4,8 @@ import path from "path";
 import fetch from "node-fetch";
 
 // CONFIG
-const BASE_URL = "https://myanimelist.net/anime/58437/Botsuraku_Yotei_no_Kizoku_dakedo_Hima_Datta_kara_Mahou_wo_Kiwametemita/characters";
-const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\BOTSURAKU YOTEI NO KIZOKU`;
+const BASE_URL = "https://myanimelist.net/anime/889/Black_Lagoon/characters";
+const OUTPUT_ROOT_DIR = String.raw`T:\_SELECT\READY\BLACK LAGOON`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
 // utils fichiers/réseau

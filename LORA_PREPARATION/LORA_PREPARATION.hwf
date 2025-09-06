@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>T:\_SELECT\READY\BOTSURAKU YOTEI NO KIZOKU</default_value>
+      <default_value>T:\_SELECT\READY\BLACK LAGOON</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -436,14 +436,14 @@
     <hop>
       <from>Start</from>
       <to>3_DELETE_DUPLICATES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -460,13 +460,6 @@
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
-      <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>N</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
     </hop>
     <hop>
       <from>File SQLLITE.db exists ?</from>
@@ -523,6 +516,13 @@
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>6_SQLLITE_WDTAG.hpl</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
     </hop>
   </hops>
   <notepads>

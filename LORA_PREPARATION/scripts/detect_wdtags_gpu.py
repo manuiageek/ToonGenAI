@@ -6,7 +6,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, UnidentifiedImageError
 import csv
-from typing import List
+from typing import List, Optional
 import sqlite3
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -46,7 +46,7 @@ DB_FILENAME = "SQLLITE.db"
 SQLITE_QUERY = "select image_path from images"
 SQLITE_TABLE = "images"
 SQLITE_TAGS_COLUMN = "detect_wdtags"
-BATCH_COMMIT_SIZE = 1000
+BATCH_COMMIT_SIZE = 1000  # 0 = commit after each batch
 
 # Characters dir + extensions images
 CHARACTERS_DIR_NAME = "_characters"
@@ -251,23 +251,47 @@ class WD14Tagger:
         scored.sort(key=lambda x: x[1], reverse=True)
         return [t for t, _ in scored]
 
-    def process_batch(self, image_paths: List[str]) -> List[List[str]]:
-        # Inférence par lot GPU
+    def process_batch(self, image_paths: List[str]) -> List[Optional[List[str]]]:
+        # Inférence par lot GPU tolérante aux erreurs
         if not image_paths:
             return []
         input_name = self.session.get_inputs()[0].name
 
-        # Prétraitement concurrent
+        # Prétraitement concurrent tolérant
         max_workers = min(32, max(4, (os.cpu_count() or 8)))
-        with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            batch = list(ex.map(self._preprocess_no_batch, image_paths))
+        preproc_ok = []
+        index_map = []
+        results: List[Optional[List[str]]] = [None] * len(image_paths)
 
-        batch_input = np.stack(batch, axis=0).astype(np.float32)
-        outputs = self.session.run(None, {input_name: batch_input})
+        def worker(item):
+            idx, p = item
+            try:
+                arr = self._preprocess_no_batch(p)
+                return idx, arr
+            except Exception as e:
+                logger.warning("Préproc échouée pour %s: %s", p, e)
+                return idx, None
+
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            for idx, arr in ex.map(worker, enumerate(image_paths)):
+                if arr is not None:
+                    preproc_ok.append(arr)
+                    index_map.append(idx)
+
+        if not preproc_ok:
+            return results
+
+        batch_input = np.stack(preproc_ok, axis=0).astype(np.float32)
+        try:
+            outputs = self.session.run(None, {input_name: batch_input})
+        except Exception as e:
+            logger.exception("Inférence ONNX échouée pour le lot")
+            return results
         probs = outputs[0]
 
-        results: List[List[str]] = []
-        for row in probs:
+        # Reconstruction par index
+        for out_idx, orig_idx in enumerate(index_map):
+            row = probs[out_idx]
             scored = []
             for tag, score in zip(self.tags, row):
                 s = float(score)
@@ -277,7 +301,8 @@ class WD14Tagger:
             tags = [t for t, _ in scored]
             if TOPK_OUTPUT and TOPK_OUTPUT > 0:
                 tags = tags[:TOPK_OUTPUT]
-            results.append(tags)
+            results[orig_idx] = tags
+
         return results
 
 # ==================== SQLITE ====================
@@ -309,7 +334,7 @@ def iter_image_files(dir_path: str):
         if ext in IMAGE_EXTS:
             yield entry.path
 
-# ==== Lookalike helpers ====
+# ==== Lookalike helpers ===
 def ensure_lookalike_table(conn: sqlite3.Connection) -> None:
     # Création table + index
     cur = conn.cursor()
@@ -347,9 +372,8 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        logger.warning("OPENAI_API_KEY manquante, post-traitement IA ignoré")
+        logger.warning("OPENAI_API_KEY manquant, post-traitement IA ignoré")
         return tags
-
     try:
         from openai import OpenAI
     except Exception:
@@ -401,24 +425,9 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
                     response_format={"type": "json_schema", "json_schema": json_schema},
                     temperature=0,
                     max_output_tokens=512,
-                )
+    )
                 if hasattr(resp, "output_text") and resp.output_text:
                     content = resp.output_text.strip()
-                else:
-                    try:
-                        resp_dict = resp.model_dump() if hasattr(resp, "model_dump") else getattr(resp, "__dict__", {})
-                        content = resp_dict.get("output_text")
-                        if not content:
-                            output = resp_dict.get("output", []) or []
-                            texts = []
-                            for block in output:
-                                typ = block.get("type") if isinstance(block, dict) else getattr(block, "type", None)
-                                if typ == "output_text":
-                                    texts.append(block.get("text") if isinstance(block, dict) else getattr(block, "text", ""))
-                            content = ("".join(texts)).strip() if texts else None
-                    except Exception:
-                        content = None
-
             except Exception as e_resp:
                 logger.debug(f"Responses API indisponible (tentative {attempt}): {e_resp}")
                 # Fallback Chat Completions propre
@@ -481,8 +490,10 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
     if not os.path.isfile(db_path):
         raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
 
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 5000")
+        conn.execute("PRAGMA journal_mode = WAL")
         ensure_lookalike_table(conn)
         tagger = WD14Tagger()
 
@@ -494,7 +505,7 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
         batch: List[str] = []
 
         def flush_batch(paths: List[str]) -> None:
-            # Exécution d'un lot
+            # Exécution d'un lot tolérant
             nonlocal processed, upserts, processed_since_commit, errors
             if not paths:
                 return
@@ -504,6 +515,10 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
                 dt = time.perf_counter() - t1
 
                 for fp, tags in zip(paths, batch_tags):
+                    if tags is None:
+                        errors += 1
+                        continue
+
                     final_tags = ai_refine_tags(tags) if LOOKALIKE_AI_ENABLED else tags
                     tags_json = json.dumps(final_tags, ensure_ascii=False)
                     character_name = os.path.splitext(os.path.basename(fp))[0]
@@ -550,8 +565,11 @@ def run_sqlite_job(db_path: str) -> None:
     if not os.path.isfile(db_path):
         raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
 
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 5000")
+        conn.execute("PRAGMA journal_mode = WAL")
+
         paths = fetch_image_paths(conn, SQLITE_QUERY)
         logger.info("Chemins récupérés: %d", len(paths))
 
@@ -570,6 +588,9 @@ def run_sqlite_job(db_path: str) -> None:
                 dt = time.perf_counter() - t1
 
                 for raw_p, tags in zip(batch_paths, batch_tags):
+                    if tags is None:
+                        errors += 1
+                        continue
                     tags_json = json.dumps(tags, ensure_ascii=False)
                     rc = update_detect_wdtag(conn, raw_p, tags_json)
                     updated += rc
@@ -611,7 +632,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--directory",
         type=str,
-        default=r"T:\_SELECT\READY\ARTE",
+        default=r"T:\_SELECT\READY\BLACK LAGOON",
         help="Repertoire contenant SQLLITE.db"
     )
     parser.add_argument(
@@ -657,3 +678,4 @@ if __name__ == "__main__":
             run_characters_dir_job(sqlite_db_path, characters_dir)
         else:
             logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
+
