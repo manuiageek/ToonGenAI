@@ -21,7 +21,7 @@ from PIL import Image
 
 # Configuration optimisee
 HASH_SIZE = 16  # Taille du hash perceptuel
-PERCEPTUAL_THRESHOLD = 5  # Seuil de difference pour hash perceptuel (augmente)
+PERCEPTUAL_THRESHOLD = 8  # Seuil de difference pour hash perceptuel (augmente)
 SIZE_DIFFERENCE_RATIO = 0.1  # 10% de difference de taille max pour comparer
 CACHE_FILE = Path(r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\image_hashes_cache.lz4")
 WORKERS = min(4, (os.cpu_count() or 4) * 2)
@@ -31,6 +31,7 @@ CACHE_VERSION = "v7"
 
 # Types de hash pour meilleure detection
 HASH_TYPES = ['average', 'phash', 'dhash']
+IGNORE_DIRS = {'_characters'}  # Dossiers a ignorer totalement
 
 class ImageHasher:
     """Classe pour calculer plusieurs types de hash d'image."""
@@ -289,6 +290,15 @@ def scan_directory(directory: Path) -> List[Path]:
     logging.info(f"Scan de {directory}...")
     
     for path in directory.rglob('*'):
+        # Ignorer totalement les chemins contenant des dossiers a exclure
+        try:
+            parts_lower = {p.lower() for p in path.parts}
+            if any(ign.lower() in parts_lower for ign in IGNORE_DIRS):
+                continue
+        except Exception:
+            # En cas d'erreur sur la resolution des parties du chemin, on continue prudemment
+            pass
+
         if path.is_file() and path.suffix.lower() in extensions:
             try:
                 # Ignorer les fichiers trop petits (probablement des vignettes)
@@ -296,7 +306,7 @@ def scan_directory(directory: Path) -> List[Path]:
                     images.append(path)
             except Exception:
                 continue
-    
+
     return images
 
 def deduplicate_images(images: List[Path], cache: EnhancedCache, threshold: int = PERCEPTUAL_THRESHOLD, dry_run: bool = False) -> int:
@@ -420,7 +430,7 @@ def deduplicate_images(images: List[Path], cache: EnhancedCache, threshold: int 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Detecteur de doublons d'images ameliore")
     parser.add_argument("--directory", type=Path, 
-                       default=Path(r"T:\_SELECT\READY\2.5-JIGEN NO RIRISA"),
+                       default=Path(r"D:\SHUUMATSU NO WALKURE"),
                        help="Repertoire a analyser")
     parser.add_argument("--clear-cache", action="store_true", 
                        help="Efface le cache avant de commencer")

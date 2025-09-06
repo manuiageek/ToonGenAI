@@ -260,7 +260,7 @@ def main():
     parser.add_argument(
         "--directory",
         type=str,
-        default=r"D:\ISEKAI MAOU\_temp2\07",
+        default=r"D:\SHUUMATSU NO WALKURE",
         help="Repertoire a traiter"
     )
     parser.add_argument(

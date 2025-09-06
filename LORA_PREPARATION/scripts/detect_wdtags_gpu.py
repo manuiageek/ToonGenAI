@@ -632,7 +632,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--directory",
         type=str,
-        default=r"T:\_SELECT\READY\BLACK LAGOON",
+        default=r"D:\SHUUMATSU NO WALKURE",
         help="Repertoire contenant SQLLITE.db"
     )
     parser.add_argument(
