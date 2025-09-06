@@ -85,7 +85,7 @@
     <resultfieldname>stdout</resultfieldname>
     <attributes/>
     <GUI>
-      <xloc>704</xloc>
+      <xloc>640</xloc>
       <yloc>208</yloc>
     </GUI>
   </transform>
@@ -168,7 +168,7 @@
     </fields>
     <attributes/>
     <GUI>
-      <xloc>400</xloc>
+      <xloc>336</xloc>
       <yloc>208</yloc>
     </GUI>
   </transform>
@@ -198,10 +198,9 @@
     <limitRows>N</limitRows>
     <limitRowsNumber>0</limitRowsNumber>
     <loglevel>Basic</loglevel>
-    <logmessage/>
     <attributes/>
     <GUI>
-      <xloc>848</xloc>
+      <xloc>784</xloc>
       <yloc>208</yloc>
     </GUI>
   </transform>
@@ -248,7 +247,7 @@
     <loglevel>Basic</loglevel>
     <attributes/>
     <GUI>
-      <xloc>560</xloc>
+      <xloc>496</xloc>
       <yloc>208</yloc>
     </GUI>
   </transform>

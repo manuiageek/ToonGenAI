@@ -94,8 +94,11 @@ def main() -> None:
     if not os.path.isdir(base_dir):
         raise FileNotFoundError(f"Répertoire introuvable: {base_dir}")
 
-    # Destination locale
+    # Destination locale (réinitialisée à chaque exécution)
     dest_root = os.path.join(base_dir, "_classified")
+    if os.path.isdir(dest_root):
+        logger.info("Suppression du répertoire existant: %s", dest_root)
+        shutil.rmtree(dest_root)
     os.makedirs(dest_root, exist_ok=True)
 
     db_path = build_db_path_from_dir(base_dir)

@@ -140,10 +140,24 @@ def decide_target(image_tags: List[str], candidates: List[Candidate], threshold:
     has_monochrome = contains_substr(image_tags, "monochrome")
     has_closed = contains_substr(image_tags, "closed_eyes")
 
+    # Nouveaux attributs/règles
+    has_eye_focus = contains_substr(image_tags, "eye focus") or contains_substr(image_tags, "eye_focus")
+    has_close_up = contains_substr(image_tags, "close-up") or contains_substr(image_tags, "close_up")
+    has_head_out = contains_substr(image_tags, "head out of frame") or contains_substr(image_tags, "head_out_of_frame")
+    has_dark = contains_substr(image_tags, "dark")
+
     target: Optional[str] = None
 
+    # R0: règles directes
+    # eye focus + close-up => z_eyefocus
+    if has_eye_focus and has_close_up:
+        target = "z_eyefocus"
+    # head out of frame => z_head_out_frame
+    elif has_head_out:
+        target = "z_head_out_frame"
+
     # R1: boy seul
-    if has_boy and not has_girl:
+    elif has_boy and not has_girl:
         target = "z_boy"
     # R2: monochrome
     elif has_monochrome:
@@ -162,6 +176,10 @@ def decide_target(image_tags: List[str], candidates: List[Candidate], threshold:
             target = match
         else:
             target = "z_misc"
+
+    # Ajustement: si misc et "dark" présent => z_misc_dark
+    if target == "z_misc" and has_dark:
+        target = "z_misc_dark"
 
     return target
 

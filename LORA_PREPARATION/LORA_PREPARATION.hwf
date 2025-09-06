@@ -429,7 +429,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -521,6 +521,13 @@
       <from>Start</from>
       <to>6_SQLLITE_WDTAG.hpl</to>
       <enabled>N</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>Start</from>
+      <to>8_CLASSIFY_IMAGES.hpl</to>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
