@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\SHUUMATSU NO WALKURE</default_value>
+      <default_value>D:\MATO SEIHEI NO SLAVE</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -24,6 +24,7 @@
       <type>SPECIAL</type>
       <attributes/>
       <DayOfMonth>1</DayOfMonth>
+      <doNotWaitOnFirstExecution>N</doNotWaitOnFirstExecution>
       <hour>12</hour>
       <intervalMinutes>60</intervalMinutes>
       <intervalSeconds>0</intervalSeconds>
@@ -32,7 +33,7 @@
       <schedulerType>0</schedulerType>
       <weekDay>1</weekDay>
       <parallel>N</parallel>
-      <xloc>240</xloc>
+      <xloc>144</xloc>
       <yloc>288</yloc>
       <attributes_hac/>
     </action>
@@ -62,7 +63,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>448</xloc>
+      <xloc>352</xloc>
       <yloc>48</yloc>
       <attributes_hac/>
     </action>
@@ -92,7 +93,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>448</xloc>
+      <xloc>352</xloc>
       <yloc>144</yloc>
       <attributes_hac/>
     </action>
@@ -122,7 +123,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>688</xloc>
+      <xloc>592</xloc>
       <yloc>144</yloc>
       <attributes_hac/>
     </action>
@@ -152,7 +153,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>880</xloc>
+      <xloc>784</xloc>
       <yloc>144</yloc>
       <attributes_hac/>
     </action>
@@ -182,7 +183,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>1104</xloc>
+      <xloc>1008</xloc>
       <yloc>144</yloc>
       <attributes_hac/>
     </action>
@@ -212,7 +213,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>1104</xloc>
+      <xloc>1008</xloc>
       <yloc>288</yloc>
       <attributes_hac/>
     </action>
@@ -242,7 +243,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>512</xloc>
+      <xloc>416</xloc>
       <yloc>416</yloc>
       <attributes_hac/>
     </action>
@@ -272,7 +273,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>512</xloc>
+      <xloc>416</xloc>
       <yloc>528</yloc>
       <attributes_hac/>
     </action>
@@ -302,7 +303,7 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>512</xloc>
+      <xloc>416</xloc>
       <yloc>624</yloc>
       <attributes_hac/>
     </action>
@@ -313,7 +314,7 @@
       <attributes/>
       <filename>${anime_folder_param}/SQLLITE.db</filename>
       <parallel>N</parallel>
-      <xloc>512</xloc>
+      <xloc>416</xloc>
       <yloc>288</yloc>
       <attributes_hac/>
     </action>
@@ -323,7 +324,7 @@
       <type>DUMMY</type>
       <attributes/>
       <parallel>N</parallel>
-      <xloc>880</xloc>
+      <xloc>784</xloc>
       <yloc>288</yloc>
       <attributes_hac/>
     </action>
@@ -350,7 +351,7 @@
         </field>
       </fields>
       <parallel>N</parallel>
-      <xloc>688</xloc>
+      <xloc>592</xloc>
       <yloc>240</yloc>
       <attributes_hac/>
     </action>
@@ -371,7 +372,7 @@
       <set_append_logfile>N</set_append_logfile>
       <set_logfile>N</set_logfile>
       <parallel>N</parallel>
-      <xloc>768</xloc>
+      <xloc>672</xloc>
       <yloc>624</yloc>
       <attributes_hac/>
     </action>
@@ -429,7 +430,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -443,7 +444,7 @@
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
@@ -527,7 +528,7 @@
     <hop>
       <from>Start</from>
       <to>8_CLASSIFY_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -548,8 +549,8 @@
       <fontname>Segoe UI</fontname>
       <fontsize>15</fontsize>
       <height>37</height>
-      <xloc>640</xloc>
-      <yloc>432</yloc>
+      <xloc>544</xloc>
+      <yloc>416</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>

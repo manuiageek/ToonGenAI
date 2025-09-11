@@ -138,7 +138,6 @@ def decide_target(image_tags: List[str], candidates: List[Candidate], threshold:
     has_boy = contains_substr(image_tags, "boy")
     has_girl = contains_substr(image_tags, "girl")
     has_monochrome = contains_substr(image_tags, "monochrome")
-    has_closed = contains_substr(image_tags, "closed_eyes")
 
     # Nouveaux attributs/règles
     has_eye_focus = contains_substr(image_tags, "eye focus") or contains_substr(image_tags, "eye_focus")
@@ -162,9 +161,7 @@ def decide_target(image_tags: List[str], candidates: List[Candidate], threshold:
     # R2: monochrome
     elif has_monochrome:
         target = "z_monochrome"
-    # R3: closed_eyes
-    elif has_closed:
-        target = "z_closed_eyes"
+    
     # R4: ni boy ni girl => fond
     elif not has_boy and not has_girl:
         target = "z_background"
@@ -244,7 +241,7 @@ def main() -> None:
                     rc = update_lookalike(conn, str(image_path), target)
                     updated += rc
                     since_commit += rc
-                    if target not in ("z_boy", "z_monochrome", "z_closed_eyes", "z_background", "z_misc"):
+                    if target not in ("z_boy", "z_monochrome", "z_background", "z_misc"):
                         matched_characters += 1
 
                 processed += 1
