@@ -23,3 +23,8 @@ Thumbs.db
 .cache/
 .puppeteer/
 
+# modeles a ignorer
+RealESRGAN_x4plus_anime_6B.pth
+wd-vit-tagger-v3.csv
+wd-vit-tagger-v3.onnx
+yolov8x6_animeface.pt

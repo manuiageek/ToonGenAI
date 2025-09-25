@@ -52,7 +52,25 @@ pip install numpy pillow tensorflow-io deepdanbooru psutil
 check TensorFlow GPU :
 python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
 
+### REALESRGAN :
+conda create -n upscale_env python=3.10 -y
+conda activate upscale_env
+python -m pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install realesrgan==0.3.0 basicsr facexlib pillow
+
 ### ONNX :
+conda create -n onnx_env python=3.10
+conda activate onnx_env
+conda install -c nvidia/label/cuda-12.6.0 cuda-toolkit
+conda install -c conda-forge cudnn=9.3.1
+pip install onnxruntime-gpu
+pip install --upgrade "onnxruntime-gpu[cuda,cudnn]"
+
+pip install -U "openai>=1.50.0"
+
+Exemple : conda run -n onnx_env --no-capture-output python -u .\anime_autotagger_gpu.py
+
 conda create -n onnx_env python=3.10
 conda activate onnx_env
 conda install -c nvidia/label/cuda-12.6.0 cuda-toolkit
