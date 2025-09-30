@@ -40,7 +40,16 @@ CUDA_PROVIDER_OPTIONS = {
     "tunable_op_enable": 1,
     "tunable_op_tuning_enable": 1,
 }
+DEFAULT_PROVIDERS = [("CUDAExecutionProvider", CUDA_PROVIDER_OPTIONS), "CPUExecutionProvider"]
 FORCE_CPU = False
+
+# Verbosite / logs ORT
+LOG_STARTUP_DETAILS = False  # True pour logs detailles au demarrage
+ONNXRUNTIME_LOG_SEVERITY_LEVEL = 3  # 0=VERBOSE,1=INFO,2=WARNING,3=ERROR,4=FATAL
+
+# Filtrage de tags indesirables (apres nettoyage)
+EXCLUDED_TAGS = {"1girl", "1boy", "looking at viewer"}
+EXCLUDED_TAGS_LOWER = {t.lower().strip() for t in EXCLUDED_TAGS}
 
 # Images / IO
 IMAGE_EXTS = {".jpg", ".jpeg"}
@@ -56,13 +65,34 @@ CUDA_DIR = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
 
 
 def _setup_cuda_paths() -> None:
-    """Configure les chemins CUDA/cuDNN (Windows) pour permettre le chargement des DLL."""
+    """Configure les chemins CUDA/cuDNN (Windows) et tente un prechargement des DLL."""
     for d in [CUDNN_DIR, CUDA_DIR]:
         if d and os.path.isdir(d):
             try:
                 os.add_dll_directory(d)
-            except Exception:
-                pass
+                if LOG_STARTUP_DETAILS:
+                    logger.info("DLL directory ajoute: %s", d)
+            except Exception as e:
+                logger.debug("Echec add_dll_directory pour %s: %s", d, e)
+        else:
+            logger.debug("Repertoire DLL introuvable: %s", d)
+
+    # Préchargement opportuniste des DLL (si disponible dans votre version d'onnxruntime)
+    try:
+        ort.preload_dlls(cudnn=True, directory=CUDNN_DIR)
+    except Exception as e:
+        logger.debug("preload_dlls(cudnn) indisponible/échec: %s", e)
+    try:
+        ort.preload_dlls(cuda=True, directory=CUDA_DIR)
+    except Exception as e:
+        logger.debug("preload_dlls(cuda) indisponible/échec: %s", e)
+
+    # Infos debug ORT (tres verbeux) uniquement si demande
+    if LOG_STARTUP_DETAILS:
+        try:
+            ort.print_debug_info()
+        except Exception:
+            pass
 
 
 _setup_cuda_paths()
@@ -82,11 +112,21 @@ class WD14Tagger:
         so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         so.intra_op_num_threads = max(1, (os.cpu_count() or 8))
         so.inter_op_num_threads = 1
+        try:
+            so.log_severity_level = int(ONNXRUNTIME_LOG_SEVERITY_LEVEL)
+            so.log_verbosity_level = 0
+        except Exception:
+            pass
 
         logger.info("Modele ONNX: %s", os.path.abspath(self.model_path))
         logger.info("CSV Tags: %s", os.path.abspath(self.tags_csv_path))
         self.tags = self._load_tags(self.tags_csv_path)
-        self.session = self._create_session_with_fallback(so)
+        req_providers = ["CPUExecutionProvider"] if FORCE_CPU else list(DEFAULT_PROVIDERS)
+        self.session = self._create_session_with_fallback(req_providers, so)
+        try:
+            logger.info("Session ORT prête avec providers: %s", self.session.get_providers())
+        except Exception:
+            pass
         self.input_layout = self._infer_input_layout()
 
     def _load_tags(self, csv_path: str) -> List[str]:
@@ -110,17 +150,38 @@ class WD14Tagger:
             raise ValueError("Aucun tag charge depuis le CSV")
         return tags
 
-    def _create_session_with_fallback(self, so: ort.SessionOptions):
-        # Cree une session ORT en privilegiant CUDA si disponible, sinon CPU
+    def _create_session_with_fallback(self, providers: List, so: ort.SessionOptions):
+        # Crée une session en tentant CUDA puis bascule CPU si échec
         available = set(ort.get_available_providers())
-        if FORCE_CPU or "CUDAExecutionProvider" not in available:
-            providers = ["CPUExecutionProvider"]
-        else:
-            providers = [("CUDAExecutionProvider", CUDA_PROVIDER_OPTIONS), "CPUExecutionProvider"]
+
+        def normalize(prov_list: List, with_options: bool) -> List:
+            out: List = []
+            for p in prov_list:
+                if isinstance(p, tuple):
+                    name, opts = p
+                    if name in available:
+                        out.append((name, opts) if with_options else name)
+                else:
+                    if p in available:
+                        out.append(p)
+            return out or ["CPUExecutionProvider"]
+
+        prov_with_opts = normalize(providers, True)
+        prov_plain = normalize(providers, False)
+
+        logger.debug("Providers demandés: %s", providers)
+        logger.debug("Providers dispo: %s", list(available))
         try:
-            return ort.InferenceSession(self.model_path, sess_options=so, providers=providers)
-        except Exception:
-            return ort.InferenceSession(self.model_path, sess_options=so, providers=["CPUExecutionProvider"])
+            return ort.InferenceSession(self.model_path, sess_options=so, providers=prov_with_opts)
+        except Exception as e:
+            logger.debug("Echec providers avec options, tentative sans options: %s", e)
+            try:
+                return ort.InferenceSession(self.model_path, sess_options=so, providers=prov_plain)
+            except Exception as e2:
+                if "CPUExecutionProvider" not in prov_plain:
+                    logger.info("CUDA indisponible, bascule en CPU")
+                    return ort.InferenceSession(self.model_path, sess_options=so, providers=["CPUExecutionProvider"])
+                raise
 
     def _infer_input_layout(self) -> str:
         # Deduit le layout d'entree attendu par le modele (NHWC ou NCHW)
@@ -240,6 +301,9 @@ class WD14Tagger:
             tags = [t for t, _ in scored]
             if TOPK_OUTPUT and TOPK_OUTPUT > 0:
                 tags = tags[:TOPK_OUTPUT]
+            # Filtre les tags indesirables (insensible a la casse)
+            if EXCLUDED_TAGS_LOWER:
+                tags = [t for t in tags if t.lower() not in EXCLUDED_TAGS_LOWER]
             results[orig_idx] = tags
 
         return results
