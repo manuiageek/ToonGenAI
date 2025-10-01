@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>F:\_EXTR\Enen no Shouboutai - S03 OK</default_value>
+      <default_value>F:\_EXTR\Isekai Mokushiroku Mynoghra S01 OK</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -183,8 +183,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>784</xloc>
-      <yloc>240</yloc>
+      <xloc>416</xloc>
+      <yloc>256</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -244,7 +244,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>512</yloc>
+      <yloc>496</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -274,7 +274,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>624</yloc>
+      <yloc>608</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -304,7 +304,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>720</yloc>
+      <yloc>704</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -373,7 +373,7 @@
       <set_logfile>N</set_logfile>
       <parallel>N</parallel>
       <xloc>672</xloc>
-      <yloc>720</yloc>
+      <yloc>704</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -550,7 +550,7 @@
       <fontsize>15</fontsize>
       <height>37</height>
       <xloc>544</xloc>
-      <yloc>624</yloc>
+      <yloc>608</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>
