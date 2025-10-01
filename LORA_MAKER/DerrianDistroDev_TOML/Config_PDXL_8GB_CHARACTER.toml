@@ -1,0 +1,83 @@
+[[subsets]]
+caption_extension = ".txt"
+image_dir = "E:\\AI_WORK\\TRAINED_LORA\\TENCHI MUYO\\kiyone_tm\\img"
+keep_tokens = 1
+name = "img"
+num_repeats = 1
+shuffle_caption = true
+
+[train_mode]
+train_mode = "lora"
+
+[general_args.args]
+max_data_loader_n_workers = 1
+persistent_data_loader_workers = true
+pretrained_model_name_or_path = "C:/SD_CHECKPOINTS/checkpoints/DRAWING-XL/ponyDiffusionV6XL_v6StartWithThisOne.safetensors"
+sdxl = true
+no_half_vae = true
+full_bf16 = true
+mixed_precision = "bf16"
+gradient_checkpointing = true
+gradient_accumulation_steps = 4
+seed = 42
+max_token_length = 225
+prior_loss_weight = 1.0
+sdpa = true
+max_train_epochs = 15
+cache_latents = true
+vae = "G:/STABLE-DIFFUSION/ComfyUI/ComfyUI/models/vae/sdxl_vae.safetensors"
+
+[general_args.dataset_args]
+resolution = 1024
+batch_size = 2
+
+[network_args.args]
+network_dim = 16
+network_alpha = 8.0
+min_timestep = 0
+max_timestep = 1000
+
+[optimizer_args.args]
+lr_scheduler = "cosine"
+optimizer_type = "Came"
+lr_scheduler_type = "LoraEasyCustomOptimizer.RexAnnealingWarmRestarts.RexAnnealingWarmRestarts"
+lr_scheduler_num_cycles = 1
+loss_type = "huber"
+huber_schedule = "snr"
+huber_c = 0.18
+learning_rate = 0.0001
+warmup_ratio = 0.08
+unet_lr = 0.0001
+text_encoder_lr = 1e-6
+max_grad_norm = 0.8
+min_snr_gamma = 5
+
+[saving_args.args]
+output_dir = "E:/AI_WORK/loras/NEWLORA"
+save_precision = "fp16"
+save_model_as = "safetensors"
+save_every_n_epochs = 1
+save_last_n_epochs_state = 1
+save_state = true
+output_name = "kiyone_tm"
+
+[noise_args.args]
+noise_offset = 0.04
+multires_noise_iterations = 4
+multires_noise_discount = 0.4
+
+[bucket_args.dataset_args]
+enable_bucket = true
+bucket_no_upscale = true
+min_bucket_reso = 256
+max_bucket_reso = 1024
+bucket_reso_steps = 64
+
+[network_args.args.network_args]
+
+[optimizer_args.args.lr_scheduler_args]
+min_lr = 1e-6
+gamma = 0.92
+
+[optimizer_args.args.optimizer_args]
+weight_decay = "0.04"
