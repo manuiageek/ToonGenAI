@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\MATO SEIHEI NO SLAVE</default_value>
+      <default_value>F:\_EXTR\Enen no Shouboutai - S03 OK</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -183,8 +183,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>1008</xloc>
-      <yloc>144</yloc>
+      <xloc>784</xloc>
+      <yloc>240</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -214,7 +214,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>1008</xloc>
-      <yloc>288</yloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -244,7 +244,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>416</yloc>
+      <yloc>512</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -274,7 +274,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>528</yloc>
+      <yloc>624</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -304,7 +304,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>624</yloc>
+      <yloc>720</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -315,7 +315,7 @@
       <filename>${anime_folder_param}/SQLLITE.db</filename>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>288</yloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -325,7 +325,7 @@
       <attributes/>
       <parallel>N</parallel>
       <xloc>784</xloc>
-      <yloc>288</yloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -352,7 +352,7 @@
       </fields>
       <parallel>N</parallel>
       <xloc>592</xloc>
-      <yloc>240</yloc>
+      <yloc>336</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -373,7 +373,7 @@
       <set_logfile>N</set_logfile>
       <parallel>N</parallel>
       <xloc>672</xloc>
-      <yloc>624</yloc>
+      <yloc>720</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -416,7 +416,7 @@
     <hop>
       <from>Start</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -430,7 +430,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -550,7 +550,7 @@
       <fontsize>15</fontsize>
       <height>37</height>
       <xloc>544</xloc>
-      <yloc>416</yloc>
+      <yloc>624</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>
