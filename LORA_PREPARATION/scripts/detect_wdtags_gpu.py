@@ -22,7 +22,7 @@ CHARACTER_THRESHOLD = 0.55
 INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 20
-BATCH_SIZE = 64
+BATCH_SIZE = 48
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
@@ -32,11 +32,11 @@ NORMALIZATION = "none"
 # Providers
 CUDA_PROVIDER_OPTIONS = {
     "device_id": 0,
-    "arena_extend_strategy": "kSameAsRequested",
-    "gpu_mem_limit": 7 * 1024 * 1024 * 1024,
+    "arena_extend_strategy": "kNextPowerOfTwo",  # Meilleure gestion mémoire
+    "gpu_mem_limit": 6 * 1024 * 1024 * 1024,  # 6GB (laisse marge pour Windows)
     "cudnn_conv_algo_search": "HEURISTIC",
     "do_copy_in_default_stream": 1,
-    "cudnn_conv_use_max_workspace": 1,
+    "cudnn_conv_use_max_workspace": 0,  # Réduit l'utilisation mémoire
 }
 DEFAULT_PROVIDERS = [("CUDAExecutionProvider", CUDA_PROVIDER_OPTIONS), "CPUExecutionProvider"]
 FORCE_CPU = False
@@ -100,11 +100,11 @@ class WD14Tagger:
         self.model_path = self.MODEL_ONNX_PATH
         self.tags_csv_path = self.TAGS_CSV_PATH
 
-        # Session ORT optimisée
+        # Session ORT optimisée pour 5950X (16 cores)
         so = ort.SessionOptions()
         so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        so.intra_op_num_threads = 4
-        so.inter_op_num_threads = 2
+        so.intra_op_num_threads = 0  # 0 = auto (utilise tous les cores)
+        so.inter_op_num_threads = 0  # 0 = auto
 
         req_providers = ["CPUExecutionProvider"] if FORCE_CPU else list(DEFAULT_PROVIDERS)
         logger.info("Modèle ONNX: %s", os.path.abspath(self.model_path))
@@ -257,8 +257,8 @@ class WD14Tagger:
             return []
         input_name = self.session.get_inputs()[0].name
 
-        # Prétraitement concurrent tolérant
-        max_workers = 8
+        # Prétraitement concurrent tolérant (5950X = 32 threads)
+        max_workers = 24  # Optimisé pour 16 cores/32 threads
         preproc_ok = []
         index_map = []
         results: List[Optional[List[str]]] = [None] * len(image_paths)

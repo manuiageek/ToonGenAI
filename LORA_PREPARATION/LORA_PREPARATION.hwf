@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\TSUE TO TSURUGI NO WISTORIA</default_value>
+      <default_value>D:\LOVE AFTER WORLD DOMINATION</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -430,7 +430,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -500,7 +500,7 @@
     <hop>
       <from>Start</from>
       <to>File SQLLITE.db exists ?</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
