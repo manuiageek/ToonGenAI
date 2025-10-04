@@ -58,8 +58,6 @@ BATCH_COMMIT_SIZE = 1000  # 0 = commit after each batch
 CHARACTERS_DIR_NAME = "_characters"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
-# Post-traitement IA
-LOOKALIKE_AI_ENABLED = True
 
 # ==================== LOGGING ====================
 # Mettre DEBUG pour voir le pipeline en action, INFO pour production
@@ -444,137 +442,12 @@ def upsert_lookalike(conn: sqlite3.Connection, character_name: str, tags_json: s
     )
     return cur.rowcount
 
-# ==== OpenAI post-traitement ====
-def _sanitize_json_block(s: str) -> str:
-    # Nettoyage éventuels fences
-    s = s.strip()
-    if s.startswith("```"):
-        lines = s.splitlines()
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].startswith("```"):
-            lines = lines[:-1]
-        s = "\n".join(lines).strip()
-    return s
-
-def ai_refine_tags(tags: List[str]) -> List[str]:
-    # Filtrage IA des tags
-    if not LOOKALIKE_AI_ENABLED:
-        return tags
-
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        logger.warning("OPENAI_API_KEY manquant, post-traitement IA ignoré")
-        return tags
-    try:
-        from openai import OpenAI
-    except Exception:
-        logger.warning("SDK OpenAI non disponible, post-traitement IA ignoré")
-        return tags
-
-    client = OpenAI(api_key=api_key)
-    try:
-        client = client.with_options(timeout=30)
-    except Exception:
-        pass
-
-    system_msg = (
-        "Tu es un assistant qui filtre des listes de tags. "
-        "Retire les tags d'habillement, 'solo', '1girl', '1boy', "
-        "les tags liés à la poitrine 'breast', l'état de la personne 'smile', 'open mouth','sensitive', "
-        "les tags liés aux prises de vues 'looking at viewer', 'upper body', 'portrait' et autres, "
-        "les tags liés aux vues de photographie 'looking at viewer', 'upper body', 'portrait' et autres, "
-        "les tags relatifs au background 'outdoors' et autres. "
-        "Réponds UNIQUEMENT avec un objet JSON valide."
-    )
-    user_msg = f"Filtre cette liste de tags : {json.dumps(tags, ensure_ascii=False)}"
-
-    json_schema = {
-        "name": "filtered_tags",
-        "schema": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "tags": {"type": "array", "items": {"type": "string"}}
-            },
-            "required": ["tags"]
-        }
-    }
-
-    model = "gpt-4o-mini"
-
-    for attempt in range(1, 4):
-        try:
-            content = None
-
-            # Appel Responses prioritaire
-            try:
-                resp = client.responses.create(
-                    model=model,
-                    input=[
-                        {"role": "system", "content": [{"type": "text", "text": system_msg}]},
-                        {"role": "user", "content": [{"type": "text", "text": user_msg}]},
-                    ],
-                    response_format={"type": "json_schema", "json_schema": json_schema},
-                    temperature=0,
-                    max_output_tokens=512,
-    )
-                if hasattr(resp, "output_text") and resp.output_text:
-                    content = resp.output_text.strip()
-            except Exception as e_resp:
-                logger.debug(f"Responses API indisponible (tentative {attempt}): {e_resp}")
-                # Fallback Chat Completions propre
-                try:
-                    chat = client.chat.completions.create(
-                        model=model,
-                        messages=[
-                            {"role": "system", "content": system_msg},
-                            {"role": "user", "content": user_msg},
-                        ],
-                        response_format={"type": "json_object"},
-                        temperature=0,
-                        max_tokens=512,
-                    )
-                    if chat and getattr(chat, "choices", None):
-                        content = chat.choices[0].message.content.strip()
-                except Exception as e_chat:
-                    logger.debug(f"Echec Chat Completions fallback: {e_chat}")
-                    raise
-
-            if not content:
-                raise RuntimeError("Réponse vide depuis l'API OpenAI")
-
-            content = _sanitize_json_block(content)
-
-            # Parsing JSON robuste
-            try:
-                data = json.loads(content)
-                if isinstance(data, dict):
-                    for key in ["tags", "filtered_tags", "result", "items"]:
-                        val = data.get(key)
-                        if isinstance(val, list):
-                            return [str(x) for x in val if isinstance(x, str)]
-                elif isinstance(data, list) and all(isinstance(x, str) for x in data):
-                    return data
-            except json.JSONDecodeError:
-                pass
-
-            logger.warning(f"Réponse IA invalide tentative {attempt}: {content[:120]}...")
-
-        except Exception as e:
-            logger.warning(f"Erreur IA tentative {attempt}/3: {str(e)}")
-            if attempt < 3:
-                time.sleep(2)
-            continue
-
-    logger.warning("Post-traitement IA échoué, conservation des tags originaux")
-    return tags
 
 
 
 # ==== Job _characters ====
 def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
-    # Boucle _characters en batch + IA
+    # Boucle _characters en batch
     logger.info("Début traitement lookalike pour: %s", characters_dir)
     if not os.path.isdir(characters_dir):
         logger.info("Dossier _characters absent, skip")
@@ -612,7 +485,7 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
                         errors += 1
                         continue
 
-                    final_tags = ai_refine_tags(tags) if LOOKALIKE_AI_ENABLED else tags
+                    final_tags = tags
                     tags_json = json.dumps(final_tags, ensure_ascii=False)
                     character_name = os.path.splitext(os.path.basename(fp))[0]
 
@@ -782,7 +655,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chars-only",
         action="store_true",
-        help="Ne traiter que le dossier _characters et la table lookalike (avec post-traitement OpenAI)"
+        help="Ne traiter que le dossier _characters et la table lookalike"
     )
     parser.add_argument(
         "--no-pipeline",
@@ -816,7 +689,7 @@ if __name__ == "__main__":
         # Traitement principal
         use_pipeline = not args.no_pipeline
         run_sqlite_job(sqlite_db_path, use_pipeline=use_pipeline)
-        # Traitement _characters -> table lookalike + IA
+        # Traitement _characters -> table lookalike
         if os.path.isdir(characters_dir):
             logger.info("Dossier _characters détecté: %s", characters_dir)
             run_characters_dir_job(sqlite_db_path, characters_dir)
