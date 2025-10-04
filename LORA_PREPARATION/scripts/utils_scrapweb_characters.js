@@ -4,8 +4,8 @@ import path from "path";
 import fetch from "node-fetch";
 
 // CONFIG
-const BASE_URL = "https://myanimelist.net/anime/50392/Mato_Seihei_no_Slave/characters";
-const OUTPUT_ROOT_DIR = String.raw`D:\MATO SEIHEI NO SLAVE`;
+const BASE_URL = "https://myanimelist.net/anime/8074/Highschool_of_the_Dead/characters";
+const OUTPUT_ROOT_DIR = String.raw`D:\HIGH SCHOOL OF THE DEAD`;
 const OUTPUT_DIR = path.join(OUTPUT_ROOT_DIR, "_characters");
 
 // utils fichiers/réseau

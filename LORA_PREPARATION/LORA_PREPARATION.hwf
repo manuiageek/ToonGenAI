@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>D:\LOVE AFTER WORLD DOMINATION</default_value>
+      <default_value>D:\TOUBUN NO HANAYOME</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -524,6 +524,13 @@
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>6_SQLLITE_WDTAG.hpl</from>
+      <to>Switch OFF windows</to>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
     </hop>
   </hops>
   <notepads>
