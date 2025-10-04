@@ -6,10 +6,12 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, UnidentifiedImageError
 import csv
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import sqlite3
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+from threading import Thread
 
 # ==================== CONFIG ====================
 # Chemins modèle / tags
@@ -23,6 +25,10 @@ INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 20
 BATCH_SIZE = 48
+
+# Pipeline asynchrone (30GB RAM dispo)
+PREFETCH_BATCHES = 3  # Précharge 3 batches en avance (144 images * ~2MB = ~300MB RAM)
+PREPROC_WORKERS = 24  # Threads pour préprocessing
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
@@ -56,7 +62,8 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 LOOKALIKE_AI_ENABLED = True
 
 # ==================== LOGGING ====================
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+# Mettre DEBUG pour voir le pipeline en action, INFO pour production
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("wd14")
 
 # ==================== CUDA / cuDNN ====================
@@ -251,14 +258,8 @@ class WD14Tagger:
         scored.sort(key=lambda x: x[1], reverse=True)
         return [t for t, _ in scored]
 
-    def process_batch(self, image_paths: List[str]) -> List[Optional[List[str]]]:
-        # Inférence par lot GPU tolérante aux erreurs
-        if not image_paths:
-            return []
-        input_name = self.session.get_inputs()[0].name
-
-        # Prétraitement concurrent tolérant (5950X = 32 threads)
-        max_workers = 24  # Optimisé pour 16 cores/32 threads
+    def _preprocess_batch_sync(self, image_paths: List[str]) -> Tuple[np.ndarray, List[int], List[Optional[List[str]]]]:
+        """Prétraitement synchrone d'un batch - retourne (batch_tensor, index_map, results_template)"""
         preproc_ok = []
         index_map = []
         results: List[Optional[List[str]]] = [None] * len(image_paths)
@@ -272,24 +273,20 @@ class WD14Tagger:
                 logger.warning("Préproc échouée pour %s: %s", p, e)
                 return idx, None
 
-        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        with ThreadPoolExecutor(max_workers=PREPROC_WORKERS) as ex:
             for idx, arr in ex.map(worker, enumerate(image_paths)):
                 if arr is not None:
                     preproc_ok.append(arr)
                     index_map.append(idx)
 
         if not preproc_ok:
-            return results
+            return None, index_map, results
 
         batch_input = np.stack(preproc_ok, axis=0).astype(np.float32)
-        try:
-            outputs = self.session.run(None, {input_name: batch_input})
-        except Exception as e:
-            logger.exception("Inférence ONNX échouée pour le lot")
-            return results
-        probs = outputs[0]
+        return batch_input, index_map, results
 
-        # Reconstruction par index
+    def _postprocess_batch(self, probs: np.ndarray, index_map: List[int], results: List[Optional[List[str]]]) -> List[Optional[List[str]]]:
+        """Post-traitement des résultats d'inférence"""
         for out_idx, orig_idx in enumerate(index_map):
             row = probs[out_idx]
             scored = []
@@ -302,8 +299,103 @@ class WD14Tagger:
             if TOPK_OUTPUT and TOPK_OUTPUT > 0:
                 tags = tags[:TOPK_OUTPUT]
             results[orig_idx] = tags
-
         return results
+
+    def process_batch(self, image_paths: List[str]) -> List[Optional[List[str]]]:
+        """Inférence par lot GPU (mode legacy sans pipeline)"""
+        if not image_paths:
+            return []
+        input_name = self.session.get_inputs()[0].name
+
+        batch_input, index_map, results = self._preprocess_batch_sync(image_paths)
+        if batch_input is None:
+            return results
+
+        try:
+            outputs = self.session.run(None, {input_name: batch_input})
+        except Exception as e:
+            logger.exception("Inférence ONNX échouée pour le lot")
+            return results
+
+        probs = outputs[0]
+        return self._postprocess_batch(probs, index_map, results)
+
+    def process_batch_pipeline_streaming(self, all_image_paths: List[str], callback=None):
+        """Inférence avec pipeline asynchrone CPU/GPU overlapping - mode streaming avec callback temps réel"""
+        if not all_image_paths:
+            return
+
+        input_name = self.session.get_inputs()[0].name
+
+        # Queue pour batches prétraités (limitée pour éviter surcharge RAM)
+        preprocessed_queue: Queue = Queue(maxsize=PREFETCH_BATCHES)
+
+        # Thread producteur : prétraitement asynchrone
+        def producer():
+            for batch_start in range(0, len(all_image_paths), BATCH_SIZE):
+                batch_end = min(batch_start + BATCH_SIZE, len(all_image_paths))
+                batch_paths = all_image_paths[batch_start:batch_end]
+
+                t_prep_start = time.perf_counter()
+                batch_input, index_map, results_template = self._preprocess_batch_sync(batch_paths)
+                t_prep = time.perf_counter() - t_prep_start
+
+                logger.debug("[CPU] Batch preprocessed: %d images in %.3fs (queue size=%d)",
+                            len(batch_paths), t_prep, preprocessed_queue.qsize())
+
+                preprocessed_queue.put((batch_start, batch_paths, batch_input, index_map, results_template))
+
+            # Signal de fin
+            preprocessed_queue.put(None)
+            logger.debug("[CPU] Producer finished")
+
+        # Lancement du thread producteur
+        producer_thread = Thread(target=producer, daemon=True)
+        producer_thread.start()
+
+        # Thread principal : consommation + inférence GPU
+        batch_count = 0
+        while True:
+            item = preprocessed_queue.get()
+            if item is None:  # Signal de fin
+                break
+
+            batch_start, batch_paths, batch_input, index_map, results_template = item
+            batch_count += 1
+
+            if batch_input is None:
+                # Batch vide (toutes les images en erreur)
+                if callback:
+                    for i in range(len(results_template)):
+                        callback(batch_paths[i], None, 0)
+                continue
+
+            # Inférence GPU (pendant que le producteur prépare le batch suivant)
+            try:
+                logger.debug("[GPU] Starting inference batch #%d (queue size=%d)", batch_count, preprocessed_queue.qsize())
+
+                t1 = time.perf_counter()
+                outputs = self.session.run(None, {input_name: batch_input})
+                dt = time.perf_counter() - t1
+
+                logger.debug("[GPU] Inference done: %.3fs for %d images (%.1f img/s)",
+                            dt, len(batch_paths), len(batch_paths) / dt)
+
+                probs = outputs[0]
+                batch_results = self._postprocess_batch(probs, index_map, results_template)
+
+                # Callback temps réel pour chaque image
+                if callback:
+                    for i, result in enumerate(batch_results):
+                        callback(batch_paths[i], result, dt / max(1, len(batch_paths)))
+
+            except Exception as e:
+                logger.exception("Inférence ONNX échouée pour batch #%d", batch_count)
+                if callback:
+                    for path in batch_paths:
+                        callback(path, None, 0)
+
+        producer_thread.join()
 
 # ==================== SQLITE ====================
 def fetch_image_paths(conn: sqlite3.Connection, query: str) -> List[str]:
@@ -560,9 +652,9 @@ def run_characters_dir_job(db_path: str, characters_dir: str) -> None:
         conn.close()
 
 # ==================== MAIN LOOP ====================
-def run_sqlite_job(db_path: str) -> None:
-    # Boucle principale SQLite en batch
-    logger.info("Début traitement SQLite")
+def run_sqlite_job(db_path: str, use_pipeline: bool = True) -> None:
+    # Boucle principale SQLite - mode pipeline par défaut
+    logger.info("Début traitement SQLite (mode pipeline: %s)", use_pipeline)
     if not os.path.isfile(db_path):
         raise FileNotFoundError(f"Base SQLite introuvable: {db_path}")
 
@@ -581,30 +673,34 @@ def run_sqlite_job(db_path: str) -> None:
         errors = 0
         processed_since_commit = 0
 
-        for i in range(0, len(paths), BATCH_SIZE):
-            batch_paths = paths[i:i + BATCH_SIZE]
-            try:
-                t1 = time.perf_counter()
-                batch_tags = tagger.process_batch(batch_paths)
-                dt = time.perf_counter() - t1
+        if use_pipeline:
+            # MODE PIPELINE : traitement streaming avec affichage temps réel
+            logger.info("Lancement pipeline asynchrone (prefetch=%d batches)", PREFETCH_BATCHES)
+            t1 = time.perf_counter()
 
-                for raw_p, tags in zip(batch_paths, batch_tags):
-                    if tags is None:
-                        errors += 1
-                        continue
-                    tags_json = json.dumps(tags, ensure_ascii=False)
-                    rc = update_detect_wdtag(conn, raw_p, tags_json)
-                    updated += rc
-                    processed += 1
-                    processed_since_commit += 1
+            # Callback pour affichage temps réel + écriture DB
+            def on_image_processed(image_path: str, tags: Optional[List[str]], infer_time: float):
+                nonlocal processed, updated, errors, processed_since_commit
 
-                    payload = {
-                        "image_path": raw_p,
-                        "tags": tags,
-                        "infer_sec": round(dt / max(1, len(batch_paths)), 3),
-                    }
-                    print(json.dumps(payload, ensure_ascii=False))
+                if tags is None:
+                    errors += 1
+                    return
 
+                tags_json = json.dumps(tags, ensure_ascii=False)
+                rc = update_detect_wdtag(conn, image_path, tags_json)
+                updated += rc
+                processed += 1
+                processed_since_commit += 1
+
+                # Affichage temps réel
+                payload = {
+                    "image_path": image_path,
+                    "tags": tags,
+                    "infer_sec": round(infer_time, 3),
+                }
+                print(json.dumps(payload, ensure_ascii=False))
+
+                # Commit périodique
                 if processed_since_commit >= BATCH_COMMIT_SIZE:
                     conn.commit()
                     logger.info(
@@ -613,9 +709,50 @@ def run_sqlite_job(db_path: str) -> None:
                         updated,
                     )
                     processed_since_commit = 0
-            except Exception:
-                errors += len(batch_paths)
-                logger.exception("Echec traitement batch [%d:%d]", i, i + len(batch_paths))
+
+            # Exécution du pipeline avec callback
+            tagger.process_batch_pipeline_streaming(paths, callback=on_image_processed)
+
+            dt = time.perf_counter() - t1
+            logger.info("Pipeline terminé en %.2fs (%.1f img/s)", dt, len(paths) / dt)
+
+        else:
+            # MODE LEGACY : batch par batch (dent de scie)
+            for i in range(0, len(paths), BATCH_SIZE):
+                batch_paths = paths[i:i + BATCH_SIZE]
+                try:
+                    t1 = time.perf_counter()
+                    batch_tags = tagger.process_batch(batch_paths)
+                    dt = time.perf_counter() - t1
+
+                    for raw_p, tags in zip(batch_paths, batch_tags):
+                        if tags is None:
+                            errors += 1
+                            continue
+                        tags_json = json.dumps(tags, ensure_ascii=False)
+                        rc = update_detect_wdtag(conn, raw_p, tags_json)
+                        updated += rc
+                        processed += 1
+                        processed_since_commit += 1
+
+                        payload = {
+                            "image_path": raw_p,
+                            "tags": tags,
+                            "infer_sec": round(dt / max(1, len(batch_paths)), 3),
+                        }
+                        print(json.dumps(payload, ensure_ascii=False))
+
+                    if processed_since_commit >= BATCH_COMMIT_SIZE:
+                        conn.commit()
+                        logger.info(
+                            "Commit intermédiaire après %d lignes OK (MAJ cumulées=%d)",
+                            processed_since_commit,
+                            updated,
+                        )
+                        processed_since_commit = 0
+                except Exception:
+                    errors += len(batch_paths)
+                    logger.exception("Echec traitement batch [%d:%d]", i, i + len(batch_paths))
 
         conn.commit()
         logger.info("Terminé. OK=%d, MAJ=%d, erreurs=%d", processed, updated, errors)
@@ -647,6 +784,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Ne traiter que le dossier _characters et la table lookalike (avec post-traitement OpenAI)"
     )
+    parser.add_argument(
+        "--no-pipeline",
+        action="store_true",
+        help="Désactive le pipeline asynchrone (mode legacy avec dent de scie)"
+    )
     args = parser.parse_args()
 
     base_dir = os.path.normpath(args.directory)
@@ -672,7 +814,8 @@ if __name__ == "__main__":
             logger.info("Dossier _characters non trouvé, aucune insertion lookalike")
     else:
         # Traitement principal
-        run_sqlite_job(sqlite_db_path)
+        use_pipeline = not args.no_pipeline
+        run_sqlite_job(sqlite_db_path, use_pipeline=use_pipeline)
         # Traitement _characters -> table lookalike + IA
         if os.path.isdir(characters_dir):
             logger.info("Dossier _characters détecté: %s", characters_dir)
