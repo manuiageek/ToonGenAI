@@ -22,7 +22,7 @@ CHARACTER_THRESHOLD = 0.55
 INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 20
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
@@ -32,11 +32,11 @@ NORMALIZATION = "none"
 # Providers
 CUDA_PROVIDER_OPTIONS = {
     "device_id": 0,
-    "arena_extend_strategy": "kNextPowerOfTwo",
-    "cudnn_conv_use_max_workspace": 1,
+    "arena_extend_strategy": "kSameAsRequested",
+    "gpu_mem_limit": 7 * 1024 * 1024 * 1024,
+    "cudnn_conv_algo_search": "HEURISTIC",
     "do_copy_in_default_stream": 1,
-    "tunable_op_enable": 1,
-    "tunable_op_tuning_enable": 1,
+    "cudnn_conv_use_max_workspace": 1,
 }
 DEFAULT_PROVIDERS = [("CUDAExecutionProvider", CUDA_PROVIDER_OPTIONS), "CPUExecutionProvider"]
 FORCE_CPU = False
@@ -103,8 +103,8 @@ class WD14Tagger:
         # Session ORT optimisée
         so = ort.SessionOptions()
         so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        so.intra_op_num_threads = max(1, (os.cpu_count() or 8))
-        so.inter_op_num_threads = 1
+        so.intra_op_num_threads = 4
+        so.inter_op_num_threads = 2
 
         req_providers = ["CPUExecutionProvider"] if FORCE_CPU else list(DEFAULT_PROVIDERS)
         logger.info("Modèle ONNX: %s", os.path.abspath(self.model_path))
@@ -258,7 +258,7 @@ class WD14Tagger:
         input_name = self.session.get_inputs()[0].name
 
         # Prétraitement concurrent tolérant
-        max_workers = min(32, max(4, (os.cpu_count() or 8)))
+        max_workers = 8
         preproc_ok = []
         index_map = []
         results: List[Optional[List[str]]] = [None] * len(image_paths)

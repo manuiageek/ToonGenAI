@@ -11,7 +11,7 @@
     <parameters>
       <parameter>
         <name>twitter_message_param</name>
-        <default_value>#EvilKiyone #TenchiMuyo #AIFANART</default_value>
+        <default_value>#Nagi #TenchiMuyo #AIFANART</default_value>
         <description/>
       </parameter>
     </parameters>

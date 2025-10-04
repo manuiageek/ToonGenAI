@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>anime_folder_param</name>
-      <default_value>F:\_EXTR\Isekai Mokushiroku Mynoghra S01 OK</default_value>
+      <default_value>D:\TSUE TO TSURUGI NO WISTORIA</default_value>
       <description/>
     </parameter>
   </parameters>
@@ -34,7 +34,7 @@
       <weekDay>1</weekDay>
       <parallel>N</parallel>
       <xloc>144</xloc>
-      <yloc>288</yloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -243,8 +243,8 @@
       <set_logfile>N</set_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
-      <xloc>416</xloc>
-      <yloc>496</yloc>
+      <xloc>1232</xloc>
+      <yloc>384</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -274,7 +274,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>608</yloc>
+      <yloc>480</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -304,7 +304,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>704</yloc>
+      <yloc>576</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -351,8 +351,8 @@
         </field>
       </fields>
       <parallel>N</parallel>
-      <xloc>592</xloc>
-      <yloc>336</yloc>
+      <xloc>608</xloc>
+      <yloc>320</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -373,7 +373,7 @@
       <set_logfile>N</set_logfile>
       <parallel>N</parallel>
       <xloc>672</xloc>
-      <yloc>704</yloc>
+      <yloc>576</yloc>
       <attributes_hac/>
     </action>
   </actions>
@@ -416,7 +416,7 @@
     <hop>
       <from>Start</from>
       <to>4_DELETE_NON_PERSON.hpl</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -430,7 +430,7 @@
     <hop>
       <from>Start</from>
       <to>7_LOOKALIKE_IMAGES.hpl</to>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -520,13 +520,6 @@
     </hop>
     <hop>
       <from>Start</from>
-      <to>6_SQLLITE_WDTAG.hpl</to>
-      <enabled>N</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
-    </hop>
-    <hop>
-      <from>Start</from>
       <to>8_CLASSIFY_IMAGES.hpl</to>
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
@@ -549,8 +542,8 @@
       <fontname>Segoe UI</fontname>
       <fontsize>15</fontsize>
       <height>37</height>
-      <xloc>544</xloc>
-      <yloc>608</yloc>
+      <xloc>640</xloc>
+      <yloc>496</yloc>
       <note>&lt;-- prepare _characters folder with images, use utils_scrapweb_characters.js</note>
       <width>663</width>
     </notepad>
