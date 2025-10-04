@@ -248,7 +248,7 @@
       <attributes_hac/>
     </action>
     <action>
-      <name>7_LOOKALIKE_IMAGES.hpl</name>
+      <name>7_MATCH_LOOKALIKE_IMAGES.hpl</name>
       <description/>
       <type>PIPELINE</type>
       <attributes/>
@@ -429,7 +429,7 @@
     </hop>
     <hop>
       <from>Start</from>
-      <to>7_LOOKALIKE_IMAGES.hpl</to>
+      <to>7_MATCH_LOOKALIKE_IMAGES.hpl</to>
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
@@ -443,13 +443,13 @@
     </hop>
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
-      <to>7_LOOKALIKE_IMAGES.hpl</to>
+      <to>7_MATCH_LOOKALIKE_IMAGES.hpl</to>
       <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>7_LOOKALIKE_IMAGES.hpl</from>
+      <from>7_MATCH_LOOKALIKE_IMAGES.hpl</from>
       <to>8_CLASSIFY_IMAGES.hpl</to>
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
@@ -528,7 +528,7 @@
     <hop>
       <from>6_SQLLITE_WDTAG.hpl</from>
       <to>Switch OFF windows</to>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>

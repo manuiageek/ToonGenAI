@@ -52,7 +52,7 @@ EXCLUDED_TAGS = {"1girl", "1boy", "looking at viewer"}
 EXCLUDED_TAGS_LOWER = {t.lower().strip() for t in EXCLUDED_TAGS}
 
 # Images / IO
-IMAGE_EXTS = {".jpg", ".jpeg"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".gif"}
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

@@ -111,11 +111,11 @@
       </field>
       <field>
         <length>-1</length>
-        <name>lookalike_images_by_wdtags_py</name>
+        <name>match_lookalike_by_wdtags_py</name>
         <precision>-1</precision>
         <trim_type>none</trim_type>
         <type>String</type>
-        <variable>${lookalike_images_by_wdtags_py}</variable>
+        <variable>${match_lookalike_by_wdtags_py}</variable>
       </field>
       <field>
         <length>-1</length>

@@ -20,8 +20,8 @@
     "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\classify_folders_by_character.py",
     "description" : ""
   }, {
-    "name" : "lookalike_images_by_wdtags_py",
-    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\lookalike_images_by_wdtags.py",
+    "name" : "match_lookalike_by_wdtags_py",
+    "value" : "${PROJECT_HOME}\\LORA_PREPARATION\\scripts\\match_lookalike_by_wdtags.py",
     "description" : ""
   }, {
     "name" : "python_option_u",
