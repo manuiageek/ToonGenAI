@@ -3,6 +3,7 @@ import argparse
 import logging
 import time
 import csv
+import json
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -53,6 +54,9 @@ EXCLUDED_TAGS_LOWER = {t.lower().strip() for t in EXCLUDED_TAGS}
 
 # Images / IO
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".gif"}
+
+# OpenAI post-traitement
+LOOKALIKE_AI_ENABLED = True
 
 # ==================== LOGGING ====================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -309,6 +313,133 @@ class WD14Tagger:
         return results
 
 
+# ==================== OPENAI POST-TRAITEMENT ====================
+def _sanitize_json_block(s: str) -> str:
+    # Nettoyage éventuels fences
+    s = s.strip()
+    if s.startswith("```"):
+        lines = s.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        s = "\n".join(lines).strip()
+    return s
+
+def ai_refine_tags(tags: List[str]) -> List[str]:
+    # Filtrage IA des tags
+    if not LOOKALIKE_AI_ENABLED:
+        return tags
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("OPENAI_API_KEY manquant, post-traitement IA ignoré")
+        return tags
+    try:
+        from openai import OpenAI
+    except Exception:
+        logger.warning("SDK OpenAI non disponible, post-traitement IA ignoré")
+        return tags
+
+    client = OpenAI(api_key=api_key)
+    try:
+        client = client.with_options(timeout=30)
+    except Exception:
+        pass
+
+    system_msg = (
+        "Tu es un assistant qui filtre des listes de tags. "
+        "Retire les tags d'habillement, 'solo', '1girl', '1boy', "
+        "les tags liés à la poitrine 'breast', l'état de la personne 'smile', 'open mouth','sensitive', "
+        "les tags liés aux prises de vues 'looking at viewer', 'upper body', 'portrait' et autres, "
+        "les tags liés aux vues de photographie 'looking at viewer', 'upper body', 'portrait' et autres, "
+        "les tags relatifs au background 'outdoors' et autres. "
+        "Réponds UNIQUEMENT avec un objet JSON valide."
+    )
+    user_msg = f"Filtre cette liste de tags : {json.dumps(tags, ensure_ascii=False)}"
+
+    json_schema = {
+        "name": "filtered_tags",
+        "schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "tags": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["tags"]
+        }
+    }
+
+    model = "gpt-4o-mini"
+
+    for attempt in range(1, 4):
+        try:
+            content = None
+
+            # Appel Responses prioritaire
+            try:
+                resp = client.responses.create(
+                    model=model,
+                    input=[
+                        {"role": "system", "content": [{"type": "text", "text": system_msg}]},
+                        {"role": "user", "content": [{"type": "text", "text": user_msg}]},
+                    ],
+                    response_format={"type": "json_schema", "json_schema": json_schema},
+                    temperature=0,
+                    max_output_tokens=512,
+    )
+                if hasattr(resp, "output_text") and resp.output_text:
+                    content = resp.output_text.strip()
+            except Exception as e_resp:
+                logger.debug(f"Responses API indisponible (tentative {attempt}): {e_resp}")
+                # Fallback Chat Completions propre
+                try:
+                    chat = client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system_msg},
+                            {"role": "user", "content": user_msg},
+                        ],
+                        response_format={"type": "json_object"},
+                        temperature=0,
+                        max_tokens=512,
+                    )
+                    if chat and getattr(chat, "choices", None):
+                        content = chat.choices[0].message.content.strip()
+                except Exception as e_chat:
+                    logger.debug(f"Echec Chat Completions fallback: {e_chat}")
+                    raise
+
+            if not content:
+                raise RuntimeError("Réponse vide depuis l'API OpenAI")
+
+            content = _sanitize_json_block(content)
+
+            # Parsing JSON robuste
+            try:
+                data = json.loads(content)
+                if isinstance(data, dict):
+                    for key in ["tags", "filtered_tags", "result", "items"]:
+                        val = data.get(key)
+                        if isinstance(val, list):
+                            return [str(x) for x in val if isinstance(x, str)]
+                elif isinstance(data, list) and all(isinstance(x, str) for x in data):
+                    return data
+            except json.JSONDecodeError:
+                pass
+
+            logger.warning(f"Réponse IA invalide tentative {attempt}: {content[:120]}...")
+
+        except Exception as e:
+            logger.warning(f"Erreur IA tentative {attempt}/3: {str(e)}")
+            if attempt < 3:
+                time.sleep(2)
+            continue
+
+    logger.warning("Post-traitement IA échoué, conservation des tags originaux")
+    return tags
+
+
 # ==================== FILE HELPERS ====================
 def iter_image_files(dir_path: str) -> List[str]:
     """Liste les images d'un dossier (extensions supportees), triees par nom croissant."""
@@ -323,8 +454,15 @@ def iter_image_files(dir_path: str) -> List[str]:
 
 
 def write_tag_files(finals: List[str], tag_lists: List[Optional[List[str]]]) -> None:
-    """Cree un .txt par image avec les tags separes par ", "."""
+    """Cree un .txt par image avec les tags separes par ", " (avec post-traitement OpenAI optionnel)."""
     for dst, tags in zip(finals, tag_lists):
+        if tags is None:
+            tags = []
+        else:
+            # Appliquer le post-traitement OpenAI si activé
+            if LOOKALIKE_AI_ENABLED:
+                tags = ai_refine_tags(tags)
+
         base = os.path.splitext(os.path.basename(dst))[0]
         txt_path = os.path.join(os.path.dirname(dst), f"{base}.txt")
         line = "" if not tags else ", ".join(tags)
@@ -347,7 +485,13 @@ def main() -> None:
         help="Dossier contenant directement les images a traiter (defaut: DEFAULT_DIRECTORY)",
     )
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE, help="Taille de lot pour l'inference GPU")
+    parser.add_argument("--no-ai", action="store_true", help="Désactive le post-traitement OpenAI des tags")
     args = parser.parse_args()
+
+    # Désactiver l'IA si demandé
+    global LOOKALIKE_AI_ENABLED
+    if args.no_ai:
+        LOOKALIKE_AI_ENABLED = False
 
     if not args.directory:
         raise FileNotFoundError("Aucun dossier fourni (--directory) et DEFAULT_DIRECTORY non defini.")
