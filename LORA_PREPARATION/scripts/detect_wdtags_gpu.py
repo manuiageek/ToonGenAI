@@ -26,9 +26,9 @@ REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 20
 BATCH_SIZE = 48
 
-# Pipeline asynchrone (30GB RAM dispo)
-PREFETCH_BATCHES = 3  # Précharge 3 batches en avance (144 images * ~2MB = ~300MB RAM)
-PREPROC_WORKERS = 24  # Threads pour préprocessing
+# Pipeline asynchrone (30GB RAM dispo) - MODE BEAST 🔥
+PREFETCH_BATCHES = 104  # Précharge 104 batches en avance (4992 images * ~2MB = ~10GB RAM)
+PREPROC_WORKERS = 96  # Threads pour préprocessing (I/O bound = 3x cores physiques)
 
 # Prétraitement
 TARGET_SIZE = (448, 448)
