@@ -13,15 +13,15 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 # ==================== CONFIG ====================
 # Dossier par defaut si --directory n'est pas fourni
 # Renseignez ce chemin pour eviter une longue ligne de commande
-DEFAULT_DIRECTORY = r"E:\AI_WORK\TRAINED_LORA\SHUUMATSU NO WALKURE\aphrodite_snw\img"
+DEFAULT_DIRECTORY = r"D:\HIGH SCHOOL OF THE DEAD\_characters"
 
 # Modele / tags (memes chemins que detect_wdtags_gpu.py)
 MODEL_ONNX_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\models\wd-vit-tagger-v3.onnx"
 TAGS_CSV_PATH = r"E:\_DEV\ToonGenAI\LORA_PREPARATION\scripts\models\wd-vit-tagger-v3.csv"
 
 # Inference
-GENERAL_THRESHOLD = 0.35
-CHARACTER_THRESHOLD = 0.55
+GENERAL_THRESHOLD = 0.3
+CHARACTER_THRESHOLD = 0.4
 INCLUDE_RATING_TAGS = True
 REMOVE_UNDERSCORES = True
 TOPK_OUTPUT = 0  # 0 = tous les tags retenus
@@ -331,17 +331,24 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
     if not LOOKALIKE_AI_ENABLED:
         return tags
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        logger.warning("OPENAI_API_KEY manquant, post-traitement IA ignoré")
+    # Pour z.ai, utiliser directement l'API key (pas de base_url dans env)
+    auth_token = os.getenv("ANTHROPIC_AUTH_TOKEN")  # ou "ZAI_API_KEY"
+    if not auth_token:
+        logger.warning("ANTHROPIC_AUTH_TOKEN manquant, post-traitement IA ignoré")
         return tags
+    
     try:
         from openai import OpenAI
     except Exception:
         logger.warning("SDK OpenAI non disponible, post-traitement IA ignoré")
         return tags
 
-    client = OpenAI(api_key=api_key)
+    # URL correcte pour l'API compatible OpenAI de z.ai
+    client = OpenAI(
+        api_key=auth_token,
+        base_url="https://api.z.ai/api/paas/v4/"  
+    )
+    
     try:
         client = client.with_options(timeout=30)
     except Exception:
@@ -354,90 +361,59 @@ def ai_refine_tags(tags: List[str]) -> List[str]:
         "les tags liés aux prises de vues 'looking at viewer', 'upper body', 'portrait' et autres, "
         "les tags liés aux vues de photographie 'looking at viewer', 'upper body', 'portrait' et autres, "
         "les tags relatifs au background 'outdoors' et autres. "
-        "Réponds UNIQUEMENT avec un objet JSON valide."
+        "Réponds UNIQUEMENT avec un objet JSON valide au format: {\"tags\": [\"tag1\", \"tag2\"]}"
     )
     user_msg = f"Filtre cette liste de tags : {json.dumps(tags, ensure_ascii=False)}"
 
-    json_schema = {
-        "name": "filtered_tags",
-        "schema": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "tags": {"type": "array", "items": {"type": "string"}}
-            },
-            "required": ["tags"]
-        }
-    }
-
-    model = "gpt-4o-mini"
+    model = "glm-4.5-air"  # Modèle léger et économique
 
     for attempt in range(1, 4):
         try:
-            content = None
-
-            # Appel Responses prioritaire
-            try:
-                resp = client.responses.create(
-                    model=model,
-                    input=[
-                        {"role": "system", "content": [{"type": "text", "text": system_msg}]},
-                        {"role": "user", "content": [{"type": "text", "text": user_msg}]},
-                    ],
-                    response_format={"type": "json_schema", "json_schema": json_schema},
-                    temperature=0,
-                    max_output_tokens=512,
-    )
-                if hasattr(resp, "output_text") and resp.output_text:
-                    content = resp.output_text.strip()
-            except Exception as e_resp:
-                logger.debug(f"Responses API indisponible (tentative {attempt}): {e_resp}")
-                # Fallback Chat Completions propre
-                try:
-                    chat = client.chat.completions.create(
-                        model=model,
-                        messages=[
-                            {"role": "system", "content": system_msg},
-                            {"role": "user", "content": user_msg},
-                        ],
-                        response_format={"type": "json_object"},
-                        temperature=0,
-                        max_tokens=512,
-                    )
-                    if chat and getattr(chat, "choices", None):
-                        content = chat.choices[0].message.content.strip()
-                except Exception as e_chat:
-                    logger.debug(f"Echec Chat Completions fallback: {e_chat}")
-                    raise
-
+            # Appel Chat Completions standard
+            chat = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=0,
+                max_tokens=512,
+            )
+            
+            if not chat or not chat.choices or len(chat.choices) == 0:
+                raise RuntimeError("Réponse API vide")
+            
+            content = chat.choices[0].message.content
             if not content:
-                raise RuntimeError("Réponse vide depuis l'API OpenAI")
-
+                raise RuntimeError("Message sans contenu")
+            
+            logger.info(f"Réponse brute IA: {content[:200]}")
+            
             content = _sanitize_json_block(content)
+            
+            # Parsing JSON
+            data = json.loads(content)
+            if isinstance(data, dict):
+                for key in ["tags", "filtered_tags", "result", "items"]:
+                    val = data.get(key)
+                    if isinstance(val, list):
+                        return [str(x) for x in val if isinstance(x, str)]
+            elif isinstance(data, list) and all(isinstance(x, str) for x in data):
+                return data
+            
+            logger.warning(f"Format réponse invalide tentative {attempt}: {content[:120]}")
 
-            # Parsing JSON robuste
-            try:
-                data = json.loads(content)
-                if isinstance(data, dict):
-                    for key in ["tags", "filtered_tags", "result", "items"]:
-                        val = data.get(key)
-                        if isinstance(val, list):
-                            return [str(x) for x in val if isinstance(x, str)]
-                elif isinstance(data, list) and all(isinstance(x, str) for x in data):
-                    return data
-            except json.JSONDecodeError:
-                pass
-
-            logger.warning(f"Réponse IA invalide tentative {attempt}: {content[:120]}...")
-
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON invalide tentative {attempt}/3: {e}")
         except Exception as e:
             logger.warning(f"Erreur IA tentative {attempt}/3: {str(e)}")
-            if attempt < 3:
-                time.sleep(2)
-            continue
+        
+        if attempt < 3:
+            time.sleep(2)
 
     logger.warning("Post-traitement IA échoué, conservation des tags originaux")
     return tags
+
 
 
 # ==================== FILE HELPERS ====================
