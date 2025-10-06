@@ -274,7 +274,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>480</yloc>
+      <yloc>544</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -304,7 +304,7 @@
       <wait_until_finished>Y</wait_until_finished>
       <parallel>N</parallel>
       <xloc>416</xloc>
-      <yloc>576</yloc>
+      <yloc>640</yloc>
       <attributes_hac/>
     </action>
     <action>
@@ -373,7 +373,7 @@
       <set_logfile>N</set_logfile>
       <parallel>N</parallel>
       <xloc>672</xloc>
-      <yloc>576</yloc>
+      <yloc>640</yloc>
       <attributes_hac/>
     </action>
   </actions>

@@ -42,6 +42,28 @@ CF.SkeletonKnight-ILXL_Ariane.1201834.safetensors
 &lt;lora_kind>.&lt;anime_show>-&lt;ILXL_or_whatever>_&lt;name_of_char>.&lt;url_number>.safetensor</note>
       <width>504</width>
     </notepad>
+    <notepad>
+      <backgroundcolorblue>251</backgroundcolorblue>
+      <backgroundcolorgreen>232</backgroundcolorgreen>
+      <backgroundcolorred>201</backgroundcolorred>
+      <bordercolorblue>90</bordercolorblue>
+      <bordercolorgreen>58</bordercolorgreen>
+      <bordercolorred>14</bordercolorred>
+      <fontbold>N</fontbold>
+      <fontcolorblue>90</fontcolorblue>
+      <fontcolorgreen>58</fontcolorgreen>
+      <fontcolorred>14</fontcolorred>
+      <fontitalic>N</fontitalic>
+      <fontname>Segoe UI</fontname>
+      <fontsize>9</fontsize>
+      <height>58</height>
+      <xloc>608</xloc>
+      <yloc>432</yloc>
+      <note>this transformation needs : 
+- jsoup-1.21.1.jar
+inside /lib folder</note>
+      <width>155</width>
+    </notepad>
   </notepads>
   <order>
     <hop>
